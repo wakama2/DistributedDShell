@@ -1,0 +1,12 @@
+require d2shell
+
+command ls
+
+host myhost "192.168.0.1"
+
+@Export
+void main() {
+	String s = myhost ls;
+	println(s);
+}
+
