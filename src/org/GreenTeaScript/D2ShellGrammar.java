@@ -26,6 +26,7 @@
 package org.GreenTeaScript;
 import java.io.File;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 
 import org.GreenTeaScript.D2Shell.HostManager;
 import org.GreenTeaScript.DShell.DFault;
@@ -167,12 +168,17 @@ public class D2ShellGrammar extends GreenTeaUtils {
 		/*local*/GtSyntaxTree CommandTree = TokenContext.CreateMatchedSyntaxTree(NameSpace, Pattern, "host");
 		/*local*/GtToken SourceToken = null;
 		/*local*/GtToken Token1 = TokenContext.Next();
-		/*local*/GtToken Token2 = TokenContext.Next();
+		TokenContext.Next(); // "="
+		ArrayList<String> hosts = new ArrayList<String>();
+		while(true) {
+			/*local*/GtToken host = TokenContext.Next();
+			if(!host.IsQuoted()) break;
+			hosts.add(host.ParsedText.replace("\"", ""));
+		}
 
 		/*local*/String Command = Token1.ParsedText;
-		String addr = Token2.ParsedText.replace("\"", "");
 
-		HostManager.addHost(Command, addr);
+		HostManager.addHost(Command, hosts);
 		NameSpace.SetSymbol(Command, NameSpace.GetSyntaxPattern("$DShell2$"), SourceToken);
 		NameSpace.SetSymbol(CommandSymbol(Command), Command, null);
 		return CommandTree;

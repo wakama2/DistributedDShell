@@ -34,6 +34,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Stack;
 
+import org.GreenTeaScript.D2Shell.D2ShellScheduler;
 import org.GreenTeaScript.DShell.DShellProcess;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Label;
@@ -224,10 +225,10 @@ class JLib {
 			GreenInstanceOfOperator = LibGreenTea.class.getMethod("DynamicInstanceOf", Object.class, GtType.class);
 			NewArrayLiteral = LibGreenTea.class.getMethod("NewArrayLiteral", GtType.class, Object[].class);
 			NewArray = LibGreenTea.class.getMethod("NewArray", GtType.class, Object[].class);
-			ExecCommandVoid = DShellProcess.class.getMethod("ExecCommandVoid", String[][].class);
-			ExecCommandBool = DShellProcess.class.getMethod("ExecCommandBool", String[][].class);
-			ExecCommandString = DShellProcess.class.getMethod("ExecCommandString", String[][].class);
-			ExecCommandTask = DShellProcess.class.getMethod("ExecCommandTask", String[][].class);
+			ExecCommandVoid = D2ShellScheduler.class.getMethod("ExecCommandVoid", String[][].class);
+			ExecCommandBool = D2ShellScheduler.class.getMethod("ExecCommandBool", String[][].class);
+			ExecCommandString = D2ShellScheduler.class.getMethod("ExecCommandString", String[][].class);
+			ExecCommandTask = D2ShellScheduler.class.getMethod("ExecCommandTask", String[][].class);
 		}
 		catch(Exception e) {
 			e.printStackTrace();
