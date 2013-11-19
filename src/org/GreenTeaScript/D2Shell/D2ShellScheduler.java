@@ -90,8 +90,8 @@ public class D2ShellScheduler {
 				sock = connect(addr);
 				res = runSync(sock, req);
 				out += res.out;
-			} catch(Exception e) {
-				
+			} catch(IOException e) {
+				e.printStackTrace();
 			} finally {
 				try { if(sock!=null) sock.close(); } catch(Exception e) {}
 			}
@@ -136,11 +136,16 @@ public class D2ShellScheduler {
 	}
 
 	public static Task ExecCommandTask(final String[]... cmds) {
-		final boolean[] finish = new boolean[1];
-		final String[] output = new String[1];
+		final boolean[] finish = new boolean[]{ false };
+		final String[] output = new String[] { "" };
+		final DShellException[] ex = new DShellException[]{ null };
 		final Thread th = new Thread(new Runnable() {
 			public void run() {
-				output[0] = ExecCommandString(cmds);
+				try {
+					output[0] = ExecCommandString(cmds);
+				} catch(DShellException e) {
+					ex[0] = e;
+				}
 				synchronized(finish) {
 					finish[0] = true;
 					finish.notifyAll();
@@ -157,6 +162,9 @@ public class D2ShellScheduler {
 					if(!finish[0]) {
 						try {finish.wait();} catch(Exception e) {}
 					}
+				}
+				if(ex[0] != null) {
+					throw ex[0];
 				}
 			}
 		};
