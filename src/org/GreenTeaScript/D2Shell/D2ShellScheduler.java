@@ -8,7 +8,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.GreenTeaScript.DShell.DShellException;
-import org.GreenTeaScript.DShell.Task;
+import org.GreenTeaScript.D2Shell.Task;
 
 public class D2ShellScheduler {
 	
@@ -105,6 +105,7 @@ public class D2ShellScheduler {
 		CommandResult res;
 		for(String[] cmd : cmds) {
 			String host = cmd[0];
+			if(host.equals("&")) break;//FIXME
 			String[] cmd2 = Arrays.copyOfRange(cmd, 1, cmd.length);
 			res = Exec(new CommandRequest(host, cmd2, in));
 			if(res.exception != null) {
@@ -119,6 +120,7 @@ public class D2ShellScheduler {
 		CommandResult res = null;
 		for(String[] cmd : cmds) {
 			String host = cmd[0];
+			if(host.equals("&")) break;//FIXME
 			String[] cmd2 = Arrays.copyOfRange(cmd, 1, cmd.length);
 			res = Exec(new CommandRequest(host, cmd2, in));
 			if(res.exception != null) {
@@ -133,8 +135,31 @@ public class D2ShellScheduler {
 		return false;
 	}
 
-	public static Task ExecCommandTask(String[]... cmds) {
-		return null;
+	public static Task ExecCommandTask(final String[]... cmds) {
+		final boolean[] finish = new boolean[1];
+		final String[] output = new String[1];
+		final Thread th = new Thread(new Runnable() {
+			public void run() {
+				output[0] = ExecCommandString(cmds);
+				synchronized(finish) {
+					finish[0] = true;
+					finish.notifyAll();
+				}
+			}
+		});
+		th.start();
+		return new Task() {
+			public String getOutput() {
+				return output[0];
+			}
+			public void join() {
+				synchronized(finish) {
+					if(!finish[0]) {
+						try {finish.wait();} catch(Exception e) {}
+					}
+				}
+			}
+		};
 	}
 	
 	private static Thread localDaemon = new Thread(new Runnable() {
