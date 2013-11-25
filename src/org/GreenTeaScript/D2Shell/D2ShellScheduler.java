@@ -173,7 +173,7 @@ public class D2ShellScheduler {
 	private static Thread localDaemon = new Thread(new Runnable() {
 		public void run() {
 			try {
-				D2ShellDaemon.main(new String[0]);
+				D2ShellDaemon.main_self();
 			} catch(Exception e) {
 				e.printStackTrace();
 			}

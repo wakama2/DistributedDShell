@@ -84,6 +84,9 @@ public class D2ShellDaemon {
 			String out = "";
 			DShellException ex = null;
 			try {
+				if(DEAMON_MODE) {
+					System.out.println("[debug] " + Arrays.toString(r.command));
+				}
 				out = runCommand(r);
 			} catch(DShellException e) {
 				ex = e;
@@ -105,6 +108,17 @@ public class D2ShellDaemon {
 
 	public static void close() {
 		System.exit(0);
+	}
+	
+	public static void main_self() throws Exception {
+		dm = new D2ShellDaemon();
+		dm.init();
+		ss = new ServerSocket(DEFAULT_PORT);
+		ready = true;
+		while(true) {
+			Socket s = ss.accept();
+			dm.accept(s);
+		}	
 	}
 
 	public static void main(String[] args) throws Exception {
