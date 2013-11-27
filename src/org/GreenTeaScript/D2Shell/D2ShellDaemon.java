@@ -15,13 +15,14 @@ public class D2ShellDaemon {
 	
 	public static final int WORKERS = 4;
 	
-	public static boolean DEAMON_MODE = false;
+	public boolean DEAMON_MODE = false;
 	
 	public LinkedBlockingQueue<Task> taskQueue = new LinkedBlockingQueue<Task>();
 	public Worker[] workers = new Worker[WORKERS];
 	
-	public static boolean ready = false;
-	
+	private ServerSocket ss;
+	private int port = DEFAULT_PORT;
+
 	abstract class Task implements Runnable {
 		Socket socket;
 		public Task(Socket socket) {
@@ -57,12 +58,13 @@ public class D2ShellDaemon {
 		}
 	}
 	
-	public void init() {
+	public void init() throws IOException {
 		for(int i=0; i<WORKERS; i++) {
 			Worker w = new Worker();
 			workers[i] = w;
 			w.start();
 		}
+		this.ss = new ServerSocket(port);
 	}
 
 	public void accept(final Socket sock) throws IOException {
@@ -77,7 +79,7 @@ public class D2ShellDaemon {
 		});
 	}
 	
-	public static void accept(Socket sock, InputStream is, OutputStream os) throws IOException {
+	public void accept(Socket sock, InputStream is, OutputStream os) throws IOException {
 		ObjectInputStream ois = new ObjectInputStream(is);
 		try {
 			CommandRequest r = (CommandRequest) ois.readObject();
@@ -103,21 +105,14 @@ public class D2ShellDaemon {
 		sock.close();
 	}
 	
-	private static ServerSocket ss;
-	private static D2ShellDaemon dm;
-
 	public static void close() {
 		System.exit(0);
 	}
 	
-	public static void main_self() throws Exception {
-		dm = new D2ShellDaemon();
-		dm.init();
-		ss = new ServerSocket(DEFAULT_PORT);
-		ready = true;
+	public void waitConnection() throws IOException {
 		while(true) {
-			Socket s = ss.accept();
-			dm.accept(s);
+			Socket s = this.ss.accept();
+			this.accept(s);
 		}	
 	}
 
@@ -126,15 +121,11 @@ public class D2ShellDaemon {
 		if(args.length >= 1) {
 			port = Integer.parseInt(args[0]);
 		}
-		DEAMON_MODE = true;
-		dm = new D2ShellDaemon();
+		D2ShellDaemon dm = new D2ShellDaemon();
+		dm.port = port;
+		dm.DEAMON_MODE = true;
 		dm.init();
-		ss = new ServerSocket(port);
-		ready = true;
-		while(true) {
-			Socket s = ss.accept();
-			dm.accept(s);
-		}
+		dm.waitConnection();
 	}
 }
 

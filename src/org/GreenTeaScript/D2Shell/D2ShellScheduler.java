@@ -174,20 +174,31 @@ public class D2ShellScheduler {
 		th.start();
 		return task;
 	}
-	
+
 	private static Thread localDaemon = new Thread(new Runnable() {
 		public void run() {
 			try {
-				D2ShellDaemon.main_self();
+				D2ShellDaemon dm = new D2ShellDaemon();
+				dm.init();
+				synchronized(localDaemon) {
+					localDaemon.notifyAll();
+				}
+				dm.waitConnection();
 			} catch(Exception e) {
 				e.printStackTrace();
 			}
 		}
 	});
-	
+
 	public static void startup() {
-		localDaemon.start();
-		while(!D2ShellDaemon.ready) try { Thread.sleep(1); } catch(Exception e) {}
+		synchronized(localDaemon) {
+			localDaemon.start();
+			try {
+				localDaemon.wait();
+			} catch(Exception e) {
+				e.printStackTrace();
+			}
+		}
 	}
 
 	public static void shutdown() {
