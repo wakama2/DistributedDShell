@@ -134,40 +134,45 @@ public class D2ShellScheduler {
 	public static boolean ExecCommandBool(String[]... cmds) {
 		return false;
 	}
+	
+	static class D2Task extends Task {
+		boolean finish = false;
+		String output = "";
+		DShellException exception;
+		
+		public String getOutput() {
+			return this.output;
+		}
+		
+		public void join() {
+			synchronized(this) {
+				while(!this.finish) {
+					try {this.wait();} catch(Exception e) {}
+				}
+			}
+			if(this.exception != null) {
+				throw this.exception;
+			}
+		}
+	}
 
 	public static Task ExecCommandTask(final String[]... cmds) {
-		final boolean[] finish = new boolean[]{ false };
-		final String[] output = new String[] { "" };
-		final DShellException[] ex = new DShellException[]{ null };
+		final D2Task task = new D2Task();
 		final Thread th = new Thread(new Runnable() {
 			public void run() {
 				try {
-					output[0] = ExecCommandString(cmds);
+					task.output = ExecCommandString(cmds);
 				} catch(DShellException e) {
-					ex[0] = e;
+					task.exception = e;
 				}
-				synchronized(finish) {
-					finish[0] = true;
-					finish.notifyAll();
+				synchronized(task) {
+					task.finish = true;
+					task.notifyAll();
 				}
 			}
 		});
 		th.start();
-		return new Task() {
-			public String getOutput() {
-				return output[0];
-			}
-			public void join() {
-				synchronized(finish) {
-					if(!finish[0]) {
-						try {finish.wait();} catch(Exception e) {}
-					}
-				}
-				if(ex[0] != null) {
-					throw ex[0];
-				}
-			}
-		};
+		return task;
 	}
 	
 	private static Thread localDaemon = new Thread(new Runnable() {

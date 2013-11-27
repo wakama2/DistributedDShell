@@ -93,7 +93,7 @@ public class D2ShellDaemon {
 			} catch(Exception e) {
 				e.printStackTrace();
 			}
-			CommandResult res = new CommandResult(out, ex);
+			CommandResult res = new CommandResult(out, "", ex);
 			ObjectOutputStream oos = new ObjectOutputStream(os);
 			oos.writeObject(res);
 			oos.flush();

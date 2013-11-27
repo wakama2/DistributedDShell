@@ -82,6 +82,11 @@ public class Task extends org.GreenTeaScript.D2Shell.Task {
 			throw new IllegalThreadStateException("Task is not Terminated");
 		}
 	}
+
+	@Override
+	public String getOutput() {
+		return this.getOutMessage();
+	}
 }
 
 class ProcMonitor extends Thread {	// TODO: support exit handle
