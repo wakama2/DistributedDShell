@@ -106,7 +106,7 @@ public class D2ShellDaemon {
 	}
 	
 	public static void close() {
-		System.exit(0);
+		System.exit(0);//FIXME
 	}
 	
 	public void waitConnection() throws IOException {

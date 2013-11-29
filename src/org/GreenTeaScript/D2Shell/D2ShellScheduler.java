@@ -5,6 +5,8 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 
 import org.GreenTeaScript.DShell.DShellException;
@@ -22,64 +24,54 @@ public class D2ShellScheduler {
 		return new Socket(addr, port);
 	}
 
-//	public CommandResult run(String[] cmd, boolean bg) {
-//		if(bg) {
-//			return runAsync(cmd);
-//		} else {
-//			return runSync(cmd);
-//		}
-//	}
-	
-//	public CommandResult runAsync(final String[] cmd) {
-//		return new CommandResult() {
-//			Object result;
-//			boolean finish = false;
-//			Object self = this;
-//			{
-//				Thread th = new Thread(new Runnable() {
-//					public void run() {
-//						result = runSync(cmd);
-//						synchronized(self) {
-//							finish = true;
-//							self.notifyAll();
-//						}
-//					}
-//				});
-//				th.start();
-//			}
-//			@Override public String getResult() {
-//				join();
-//				return result.toString();
-//			}
-//			@Override public void join() {
-//				synchronized(self) {
-//					while(!finish) {
-//						try { self.wait(); } catch(Exception e) { e.printStackTrace(); }
-//					}
-//				}
-//			}
-//			@Override public boolean isFinished() {
-//				return finish;
-//			}
-//		};
-//	}
-	
+	static LinkedList<CommandRequest> reqs = new LinkedList<CommandRequest>();
+
+	static {
+		Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
+			public void run() {
+				System.out.println("remain: " + reqs.size());
+				HashSet<String> hosts = new HashSet<String>();
+				for(CommandRequest r : reqs) {
+					for(String host : HostManager.getAddrs(r.host)) {
+						hosts.add(host);
+					}
+				}
+				for(String host : hosts) {
+					sendKill(host);
+				}
+		}}));
+	}
+
+	public static void sendKill(String host) {
+		try {
+			Socket socket = connect(host);
+			ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
+			oos.writeObject(new CommandRequest(host, new String[]{ D2ShellDaemon.KILL_CMD }, ""));
+			oos.flush();
+			socket.close();
+		} catch(IOException e) {
+			e.printStackTrace();
+		}
+	}
+
 	public static CommandResult runSync(Socket sock, CommandRequest r) {
+		reqs.add(r);
 		try {
 			ObjectOutputStream oos = new ObjectOutputStream(sock.getOutputStream());
 			oos.writeObject(r);
 			oos.flush();
-
 			ObjectInputStream ois = new ObjectInputStream(sock.getInputStream());
 			return (CommandResult) ois.readObject();
 		} catch(IOException e) {
 			throw new ConnectionException();
 		} catch(ClassNotFoundException e) {
 			e.printStackTrace();
+		} finally {
+			reqs.remove(r);
 		}
 		return null;
 	}
-	
+
 	private static CommandResult Exec(CommandRequest req) {
 		List<String> addrs = HostManager.getAddrs(req.host);
 		CommandResult res = null;
@@ -203,7 +195,6 @@ public class D2ShellScheduler {
 
 	public static void shutdown() {
 		D2ShellDaemon.close();
-//		while(localDaemon.isAlive()) try { Thread.sleep(1); } catch(Exception e) {}
 	}
 
 }
