@@ -1,0 +1,8 @@
+#!/bin/sh
+basedir=`dirname $0`
+jar=${basedir}/GreenTeaScript.jar
+if test ! -f ${jar}
+then
+    jar=GreenTeaScript.jar
+fi
+java -cp ${jar} org.GreenTeaScript.D2Shell.D2ShellDaemon $@

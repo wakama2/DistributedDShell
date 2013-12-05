@@ -165,7 +165,7 @@ public class D2ShellGrammar extends GreenTeaUtils {
 	}
 
 	public static GtSyntaxTree ParseHostDeclaration(GtNameSpace NameSpace, GtTokenContext TokenContext, GtSyntaxTree LeftTree, GtSyntaxPattern Pattern) {
-		/*local*/GtSyntaxTree CommandTree = TokenContext.CreateMatchedSyntaxTree(NameSpace, Pattern, "host");
+		/*local*/GtSyntaxTree CommandTree = TokenContext.CreateMatchedSyntaxTree(NameSpace, Pattern, "location");
 		/*local*/GtToken SourceToken = null;
 		/*local*/GtToken Token1 = TokenContext.Next();
 		TokenContext.Next(); // "="
@@ -720,7 +720,7 @@ public class D2ShellGrammar extends GreenTeaUtils {
 		NameSpace.AppendSyntax("letenv", LoadParseFunc2(ParserContext, GrammarClass, "ParseEnv"), null);
 		NameSpace.AppendSyntax("command", LoadParseFunc2(ParserContext, GrammarClass, "ParseCommand"), null);
 		NameSpace.AppendSyntax("-", LoadParseFunc2(ParserContext, GrammarClass, "ParseFileOperator"), LoadTypeFunc2(ParserContext, GrammarClass, "TypeFileOperator"));
-		NameSpace.AppendSyntax("host", LoadParseFunc2(ParserContext, GrammarClass, "ParseHostDeclaration"), null);
+		NameSpace.AppendSyntax("location", LoadParseFunc2(ParserContext, GrammarClass, "ParseHostDeclaration"), null);
 //		NameSpace.AppendSyntax("$DShell$", LoadParseFunc2(ParserContext, GrammarClass, "ParseDShell"), LoadTypeFunc2(ParserContext, GrammarClass, "TypeDShell"));
 		NameSpace.AppendSyntax("$FilePath$", LoadParseFunc2(ParserContext, GrammarClass, "ParseFilePath"), null);
 		NameSpace.AppendSyntax("$DShell2$", LoadParseFunc2(ParserContext, GrammarClass, "ParseDShell2"), LoadTypeFunc2(ParserContext, GrammarClass, "TypeDShell2"));
