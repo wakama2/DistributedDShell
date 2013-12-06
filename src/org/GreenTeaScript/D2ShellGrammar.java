@@ -493,12 +493,8 @@ public class D2ShellGrammar extends GreenTeaUtils {
 		if(ContextType.IsStringType() || ContextType.IsBooleanType()) {
 			Type = ContextType;
 		}
-		else if(ContextType.IsVoidType()) {
-			Type = GtStaticTable.VoidType;
-		}
 		else {
-			Type = ParsedTree.NameSpace.GetType("Task");
-			LibGreenTea.Assert(Type != null);
+			Type = GtStaticTable.VoidType;
 		}
 		/*local*/GtNode PipedNode = null;
 		/*local*/int Index = 0;
