@@ -1,9 +1,18 @@
 package org.GreenTeaScript.D2Shell;
 
 import java.io.*;
+import java.security.GeneralSecurityException;
+import java.security.KeyStore;
 import java.util.Arrays;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.net.*;
+
+import javax.net.SocketFactory;
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLServerSocket;
+import javax.net.ssl.SSLServerSocketFactory;
+import javax.net.ssl.TrustManagerFactory;
 
 import org.GreenTeaScript.DShell.DShellException;
 import org.GreenTeaScript.DShell.DShellProcess;
@@ -58,13 +67,40 @@ public class D2ShellDaemon {
 		}
 	}
 	
+	public SocketFactory getSocketFactory() throws GeneralSecurityException, IOException {
+		KeyStore keyStore = KeyStore.getInstance("JKS");
+		keyStore.load(new FileInputStream("d2shell.keystore"), "konoha".toCharArray());
+		TrustManagerFactory kmf = TrustManagerFactory.getInstance("SunX509");
+		kmf.init(keyStore);
+		SSLContext context = SSLContext.getInstance("TLS");
+		context.init(null, kmf.getTrustManagers(), null);
+		return context.getSocketFactory();
+	}
+	
+	SSLServerSocket createSSLServerSocket(int port, char[] pass) throws GeneralSecurityException, IOException {
+		KeyStore keyStore = KeyStore.getInstance("JKS");
+		keyStore.load(new FileInputStream("d2shell.keystore"), pass);
+		KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
+		kmf.init(keyStore, pass);
+		SSLContext context = SSLContext.getInstance("TLS");
+		context.init(kmf.getKeyManagers(), null, null);
+		SSLServerSocketFactory ssf = context.getServerSocketFactory();
+		SSLServerSocket ss = (SSLServerSocket) ssf.createServerSocket(port);
+		return ss;
+	}
+	
 	public void init() throws IOException {
 		for(int i=0; i<WORKERS; i++) {
 			Worker w = new Worker();
 			workers[i] = w;
 			w.start();
 		}
-		this.ss = new ServerSocket(port);
+//		this.ss = new ServerSocket(port);
+		try {
+			this.ss = createSSLServerSocket(this.port, "konoha".toCharArray());
+		} catch(GeneralSecurityException e) {
+			e.printStackTrace();
+		}
 	}
 
 	public void accept(final Socket sock) throws IOException {

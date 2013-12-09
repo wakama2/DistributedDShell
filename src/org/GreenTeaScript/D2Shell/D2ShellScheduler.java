@@ -9,10 +9,14 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 
+import javax.net.SocketFactory;
+
 import org.GreenTeaScript.DShell.DShellException;
 import org.GreenTeaScript.D2Shell.Task;
 
 public class D2ShellScheduler {
+	
+	private static SocketFactory sf = null;
 	
 	private static Socket connect(String addr) throws IOException {
 		int port = D2ShellDaemon.DEFAULT_PORT;
@@ -21,7 +25,8 @@ public class D2ShellScheduler {
 			port = Integer.parseInt(addr.substring(p+1));
 			addr = addr.substring(0, p);
 		}
-		return new Socket(addr, port);
+		System.out.println(sf);
+		return sf.createSocket(addr, port);
 	}
 
 	static LinkedList<CommandRequest> reqs = new LinkedList<CommandRequest>();
@@ -29,7 +34,6 @@ public class D2ShellScheduler {
 	static {
 		Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
 			public void run() {
-				System.out.println("remain: " + reqs.size());
 				HashSet<String> hosts = new HashSet<String>();
 				for(CommandRequest r : reqs) {
 					for(String host : HostManager.getAddrs(r.host)) {
@@ -172,6 +176,7 @@ public class D2ShellScheduler {
 			try {
 				D2ShellDaemon dm = new D2ShellDaemon();
 				dm.init();
+				sf = dm.getSocketFactory();
 				synchronized(localDaemon) {
 					localDaemon.notifyAll();
 				}
