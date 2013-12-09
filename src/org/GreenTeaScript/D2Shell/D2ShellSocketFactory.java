@@ -16,15 +16,15 @@ import javax.net.ssl.TrustManagerFactory;
 public class D2ShellSocketFactory {
 	
 	static final String keyStorePath = "ext/d2shell.keystore";
-	static final char[] pass = "konoha".toCharArray();
+	static final char[] pass = { 'k', 'o', 'n', 'o', 'h', 'a' };
 	
 	static SSLSocketFactory getSSLSocketFactory() throws GeneralSecurityException, IOException {
 		KeyStore keyStore = KeyStore.getInstance("JKS");
 		keyStore.load(new FileInputStream(keyStorePath), pass);
-		TrustManagerFactory kmf = TrustManagerFactory.getInstance("SunX509");
-		kmf.init(keyStore);
+		TrustManagerFactory tmf = TrustManagerFactory.getInstance("SunX509");
+		tmf.init(keyStore);
 		SSLContext context = SSLContext.getInstance("TLS");
-		context.init(null, kmf.getTrustManagers(), null);
+		context.init(null, tmf.getTrustManagers(), null);
 		return context.getSocketFactory();
 	}
 
@@ -48,7 +48,6 @@ public class D2ShellSocketFactory {
 				sf = getSSLSocketFactory();
 			} catch(Exception e) {
 				e.printStackTrace();
-				return null;
 			}
 		}
 		return sf;
@@ -60,7 +59,6 @@ public class D2ShellSocketFactory {
 				ssf = getSSLServerSocketFactory();
 			} catch(Exception e) {
 				e.printStackTrace();
-				return null;
 			}
 		}
 		return ssf;
