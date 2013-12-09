@@ -734,6 +734,9 @@ public class D2ShellGrammar extends GreenTeaUtils {
 		NameSpace.AppendSyntax("raise", LoadParseFunc2(ParserContext, GrammarClass, "ParseRaise"), LoadTypeFunc2(ParserContext, GrammarClass, "TypeRaise"));
 		NameSpace.AppendSyntax("dexec", LoadParseFunc2(ParserContext, GrammarClass, "ParseDexec"), LoadTypeFunc2(ParserContext, GrammarClass, "TypeDexec"));
 
+		String Command = "localhost";
+		NameSpace.SetSymbol(Command, NameSpace.GetSyntaxPattern("$DShell2$"), null);
+		NameSpace.SetSymbol(CommandSymbol(Command), Command, null);
 	}
 //endif VAJA
 }

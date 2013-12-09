@@ -1,18 +1,9 @@
 package org.GreenTeaScript.D2Shell;
 
 import java.io.*;
-import java.security.GeneralSecurityException;
-import java.security.KeyStore;
 import java.util.Arrays;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.net.*;
-
-import javax.net.SocketFactory;
-import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLServerSocket;
-import javax.net.ssl.SSLServerSocketFactory;
-import javax.net.ssl.TrustManagerFactory;
 
 import org.GreenTeaScript.DShell.DShellException;
 import org.GreenTeaScript.DShell.DShellProcess;
@@ -26,11 +17,9 @@ public class D2ShellDaemon {
 	
 	public boolean DEAMON_MODE = false;
 	
-	public LinkedBlockingQueue<Task> taskQueue = new LinkedBlockingQueue<Task>();
-	public Worker[] workers = new Worker[WORKERS];
-	
-	private ServerSocket ss;
-	private int port = DEFAULT_PORT;
+	private final LinkedBlockingQueue<Task> taskQueue = new LinkedBlockingQueue<Task>();
+	private final Worker[] workers = new Worker[WORKERS];
+	private final int port;
 
 	abstract class Task implements Runnable {
 		Socket socket;
@@ -57,49 +46,13 @@ public class D2ShellDaemon {
 			}
 		}
 	}
-
-	public static String runCommand(CommandRequest r) throws Exception {
-		if(r.input.length() == 0) {
-			return DShellProcess.ExecCommandString(r.command);
-		} else {
-			String[] c = { "echo", r.input };
-			return DShellProcess.ExecCommandString(c, r.command);
-		}
-	}
 	
-	public SocketFactory getSocketFactory() throws GeneralSecurityException, IOException {
-		KeyStore keyStore = KeyStore.getInstance("JKS");
-		keyStore.load(new FileInputStream("d2shell.keystore"), "konoha".toCharArray());
-		TrustManagerFactory kmf = TrustManagerFactory.getInstance("SunX509");
-		kmf.init(keyStore);
-		SSLContext context = SSLContext.getInstance("TLS");
-		context.init(null, kmf.getTrustManagers(), null);
-		return context.getSocketFactory();
-	}
-	
-	SSLServerSocket createSSLServerSocket(int port, char[] pass) throws GeneralSecurityException, IOException {
-		KeyStore keyStore = KeyStore.getInstance("JKS");
-		keyStore.load(new FileInputStream("d2shell.keystore"), pass);
-		KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
-		kmf.init(keyStore, pass);
-		SSLContext context = SSLContext.getInstance("TLS");
-		context.init(kmf.getKeyManagers(), null, null);
-		SSLServerSocketFactory ssf = context.getServerSocketFactory();
-		SSLServerSocket ss = (SSLServerSocket) ssf.createServerSocket(port);
-		return ss;
-	}
-	
-	public void init() throws IOException {
+	public D2ShellDaemon(int port) throws IOException {
+		this.port = port;
 		for(int i=0; i<WORKERS; i++) {
 			Worker w = new Worker();
 			workers[i] = w;
 			w.start();
-		}
-//		this.ss = new ServerSocket(port);
-		try {
-			this.ss = createSSLServerSocket(this.port, "konoha".toCharArray());
-		} catch(GeneralSecurityException e) {
-			e.printStackTrace();
 		}
 	}
 
@@ -119,19 +72,10 @@ public class D2ShellDaemon {
 		ObjectInputStream ois = new ObjectInputStream(is);
 		try {
 			CommandRequest r = (CommandRequest) ois.readObject();
-			String out = "";
-			DShellException ex = null;
-			try {
-				if(DEAMON_MODE) {
-					System.out.println("[debug] " + Arrays.toString(r.command));
-				}
-				out = runCommand(r);
-			} catch(DShellException e) {
-				ex = e;
-			} catch(Exception e) {
-				e.printStackTrace();
-			}
-			CommandResult res = new CommandResult(out, "", ex);
+			//if(DEAMON_MODE) {
+				System.out.println("[debug] " + Arrays.toString(r.command));
+			//}
+			CommandResult res = execCommand(r);
 			ObjectOutputStream oos = new ObjectOutputStream(os);
 			oos.writeObject(res);
 			oos.flush();
@@ -141,13 +85,10 @@ public class D2ShellDaemon {
 		sock.close();
 	}
 	
-	public static void close() {
-		System.exit(0);//FIXME
-	}
-	
-	public void waitConnection() throws IOException {
+	public void waitConnectionLoop() throws IOException {
+		ServerSocket ss = D2ShellSocketFactory.getServerSocketFactory().createServerSocket(this.port);
 		while(true) {
-			Socket s = this.ss.accept();
+			Socket s = ss.accept();
 			this.accept(s);
 		}	
 	}
@@ -157,11 +98,24 @@ public class D2ShellDaemon {
 		if(args.length >= 1) {
 			port = Integer.parseInt(args[0]);
 		}
-		D2ShellDaemon dm = new D2ShellDaemon();
-		dm.port = port;
-		dm.DEAMON_MODE = true;
-		dm.init();
-		dm.waitConnection();
+		D2ShellDaemon dm = new D2ShellDaemon(port);
+		dm.waitConnectionLoop();
+	}
+	
+	public static CommandResult execCommand(CommandRequest r) {
+		String out = "";
+		DShellException ex = null;
+		try {
+			if(r.input.length() == 0) {
+				out = DShellProcess.ExecCommandString(r.command);
+			} else {
+				String[] c = { "echo", r.input };
+				out = DShellProcess.ExecCommandString(c, r.command);
+			}
+		} catch(DShellException e) {
+			ex = e;
+		}
+		return new CommandResult(out, "", ex);
 	}
 }
 

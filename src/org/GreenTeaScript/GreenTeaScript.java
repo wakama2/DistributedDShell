@@ -29,7 +29,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 //endif VAJA
 
-import org.GreenTeaScript.D2Shell.D2ShellScheduler;
+import org.GreenTeaScript.D2Shell.D2ShellClient;
 import org.GreenTeaScript.D2Shell.HostManager;
 
 class GtUndefinedSymbol {
@@ -780,14 +780,14 @@ public class GreenTeaScript extends GreenTeaUtils {
 	}
 
 	public final static void main(String[] Args)  {
-		D2ShellScheduler.startup();
+		D2ShellClient.startup();
 		try {
 			GreenTeaScript.ExecCommand(Args);
 		}
 		catch(SoftwareFaultException e) {
 			System.err.println(e.GetStackTrace());
 		} finally {
-			D2ShellScheduler.shutdown();
+			D2ShellClient.shutdown();
 		}
 	}
 }
