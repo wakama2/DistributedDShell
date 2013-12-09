@@ -35,8 +35,7 @@ public class JavaScriptSourceGenerator extends GtSourceGenerator {
 		super(TargetCode, OutputFile, GeneratorFlag);
 	}
 	
-	@Override
-	public void GenerateFunc(GtFunc Func, ArrayList<String> ParamNameList, GtNode Body) {
+	@Override public void GenerateFunc(GtFunc Func, ArrayList<String> ParamNameList, GtNode Body) {
 		/*local*/String MethodName = Func.GetNativeFuncName();
 		/*local*/GtSourceBuilder Builder = new GtSourceBuilder(this);
 		Builder.IndentAndAppend("function ");
@@ -146,130 +145,195 @@ var CLASS = (function (_super) {
 		this.VisitingBuilder.Append("/* ");
 		this.VisitingBuilder.Append(Node.getClass().getSimpleName());
 		this.VisitingBuilder.Append(" */");
+		if(Node.NextNode != null){
+			Node.NextNode.Evaluate(this); 
+		}
 	}
 
-	public void VisitEmptyNode(GtEmptyNode EmptyNode) {
+	@Override public void VisitEmptyNode(GtEmptyNode EmptyNode) {
 		LibGreenTea.DebugP("empty node: " + EmptyNode.Token.ParsedText);
 	}
-	public void VisitInstanceOfNode(GtInstanceOfNode Node) {
+	@Override public void VisitInstanceOfNode(GtInstanceOfNode Node) {
 		/*extention*/
 	}
-	public void VisitSelfAssignNode(GtSelfAssignNode Node) {
+	@Override public void VisitSelfAssignNode(GtSelfAssignNode Node) {
 		Node.LeftNode.Evaluate(this);
 		this.VisitingBuilder.Append(Node.Token.ParsedText);
 		Node.RightNode.Evaluate(this);
 	}
-	public void VisitTrinaryNode(GtTrinaryNode Node) {
+	@Override public void VisitTrinaryNode(GtTrinaryNode Node) {
 		Node.ConditionNode.Evaluate(this);
 		this.VisitingBuilder.Append(" ? ");
 		Node.ThenNode.Evaluate(this);
 		this.VisitingBuilder.Append(" : ");
 		Node.ElseNode.Evaluate(this);
 	}
-	public void VisitExistsNode(GtExistsNode Node) {
+	@Override public void VisitExistsNode(GtExistsNode Node) {
 		this.DebugAppendNode(Node);
 	}
-	public void VisitCastNode(GtCastNode Node) {
+	@Override public void VisitCastNode(GtCastNode Node) {
 		this.DebugAppendNode(Node);
 	}
-	public void VisitSliceNode(GtSliceNode Node) {
+	@Override public void VisitSliceNode(GtSliceNode Node) {
 		this.DebugAppendNode(Node);
 	}
-	public void VisitSuffixNode(GtSuffixNode Node) {
+	@Override public void VisitSuffixNode(GtSuffixNode Node) {
 		this.DebugAppendNode(Node);
 	}
-	public void VisitUnaryNode(GtUnaryNode Node) {
+	@Override public void VisitUnaryNode(GtUnaryNode Node) {
 		this.VisitingBuilder.Append(Node.Token.ParsedText);
 		Node.Expr.Evaluate(this);
 	}
-	public void VisitIndexerNode(GtIndexerNode Node) {
+	@Override public void VisitIndexerNode(GtIndexerNode Node) {
 		this.VisitingBuilder.Append("[");
 		Node.Expr.Evaluate(this);
 		this.VisitingBuilder.Append("]");
 	}
-	public void VisitArrayNode(GtArrayNode Node) {
+	@Override public void VisitArrayNode(GtArrayNode Node) {
 		this.DebugAppendNode(Node);
 	}
-	public void VisitNewArrayNode(GtNewArrayNode Node) {
+	@Override public void VisitNewArrayNode(GtNewArrayNode Node) {
 		this.DebugAppendNode(Node);
 	}
-	public void VisitWhileNode(GtWhileNode Node) {
+	@Override public void VisitWhileNode(GtWhileNode Node) {
 		this.DebugAppendNode(Node);
 	}
-	public void VisitDoWhileNode(GtDoWhileNode Node) {
+	@Override public void VisitDoWhileNode(GtDoWhileNode Node) {
 		this.DebugAppendNode(Node);
 	}
-	public void VisitForNode(GtForNode Node) {
+	@Override public void VisitForNode(GtForNode Node) {
 		this.DebugAppendNode(Node);
 	}
-	public void VisitForEachNode(GtForEachNode Node) {
+	@Override public void VisitForEachNode(GtForEachNode Node) {
 		this.DebugAppendNode(Node);
 	}
-	public void VisitConstNode(GtConstNode Node) {
+	@Override public void VisitConstNode(GtConstNode Node) {
 		this.VisitingBuilder.Append(Node.Token.ParsedText);
 	}
-	public void VisitNewNode(GtNewNode Node) {
+	@Override public void VisitNewNode(GtNewNode Node) {
+		this.VisitingBuilder.Append("new ");
+		this.VisitingBuilder.Append(Node.Type.ShortName);
+		this.VisitingBuilder.Append("()");
+	}
+	@Override public void VisitConstructorNode(GtConstructorNode Node) {
 		this.DebugAppendNode(Node);
 	}
-	public void VisitConstructorNode(GtConstructorNode Node) {
-		this.DebugAppendNode(Node);
-	}
-	public void VisitNullNode(GtNullNode Node) {
+	@Override public void VisitNullNode(GtNullNode Node) {
 		this.VisitingBuilder.Append(this.NullLiteral);
 	}
-	public void VisitLocalNode(GtLocalNode Node) {
+	@Override public void VisitLocalNode(GtLocalNode Node) {
 		this.VisitingBuilder.Append(Node.Token.ParsedText);
 	}
-	public void VisitGetterNode(GtGetterNode Node) {
-		this.DebugAppendNode(Node);
+	@Override public void VisitGetterNode(GtGetterNode Node) {
+		Node.RecvNode.Evaluate(this);
+		this.VisitingBuilder.Append(".");
+		this.VisitingBuilder.Append(Node.Token.ParsedText);
 	}
-	public void VisitSetterNode(GtSetterNode Node) {
-		this.DebugAppendNode(Node);
+	@Override public void VisitSetterNode(GtSetterNode Node) {
+		Node.RecvNode.Evaluate(this);
+		this.VisitingBuilder.Append(".");
+		this.VisitingBuilder.Append(Node.Token.ParsedText);
+		this.VisitingBuilder.Append(" = ");
+		Node.ValueNode.Evaluate(this);
 	}
-	public void VisitDyGetterNode(GtDyGetterNode Node) {
-		this.DebugAppendNode(Node);
+	@Override public void VisitDyGetterNode(GtDyGetterNode Node) {
+		Node.RecvNode.Evaluate(this);
+		this.VisitingBuilder.Append(".");
+		this.VisitingBuilder.Append(Node.FieldName);
 	}
-	public void VisitDySetterNode(GtDySetterNode Node) {
-		this.DebugAppendNode(Node);
+	@Override public void VisitDySetterNode(GtDySetterNode Node) {
+		Node.RecvNode.Evaluate(this);
+		this.VisitingBuilder.Append(".");
+		this.VisitingBuilder.Append(Node.FieldName);
+		this.VisitingBuilder.Append(" = ");
+		Node.ValueNode.Evaluate(this);
 	}
-	public void VisitStaticApplyNode(GtStaticApplyNode Node) {
+	@Override public void VisitStaticApplyNode(GtStaticApplyNode Node) {
 		this.VisitingBuilder.Append(Node.Func.GetNativeFuncName());
 		this.VisitingBuilder.Append("(");
 		for(/*local*/int i = 0; i < LibGreenTea.ListSize(Node.ParamList); i++){
+			if(i > 0){
+				this.VisitingBuilder.Append(", ");
+			}
 			Node.ParamList.get(i).Evaluate(this);
 		}
 		this.VisitingBuilder.Append(")");
 	}
-	public void VisitApplyOverridedMethodNode(GtApplyOverridedMethodNode Node) {
-		this.DebugAppendNode(Node);
+	@Override public void VisitApplyOverridedMethodNode(GtApplyOverridedMethodNode Node) {
+		this.VisitingBuilder.Append(Node.Func.GetNativeFuncName());
+		this.VisitingBuilder.Append("(");
+		for(/*local*/int i = 0; i < LibGreenTea.ListSize(Node.ParamList); i++){
+			if(i > 0){
+				this.VisitingBuilder.Append(", ");
+			}
+			Node.ParamList.get(i).Evaluate(this);
+		}
+		this.VisitingBuilder.Append(")");
 	}
-	public void VisitApplyFuncNode(GtApplyFuncNode Node) {
-		this.DebugAppendNode(Node);
+	
+	// e. g  (function(...){...})(...)
+	@Override public void VisitApplyFuncNode(GtApplyFuncNode Node) {
+		this.VisitingBuilder.Append("(");
+		Node.FuncNode.Evaluate(this);
+		this.VisitingBuilder.Append(")");
+		this.VisitingBuilder.Append("(");
+		for(/*local*/int i = 0; i < LibGreenTea.ListSize(Node.ParamList); i++){
+			if(i > 0){
+				this.VisitingBuilder.Append(", ");
+			}
+			Node.ParamList.get(i).Evaluate(this);
+		}
+		this.VisitingBuilder.Append(")");
 	}
-	public void VisitApplyDynamicFuncNode(GtApplyDynamicFuncNode Node) {
-		this.DebugAppendNode(Node);
+	@Override public void VisitApplyDynamicFuncNode(GtApplyDynamicFuncNode Node) {
+		this.VisitingBuilder.Append(Node.FuncName);
+		this.VisitingBuilder.Append("(");
+		for(/*local*/int i = 0; i < LibGreenTea.ListSize(Node.ParamList); i++){
+			if(i > 0){
+				this.VisitingBuilder.Append(", ");
+			}
+			Node.ParamList.get(i).Evaluate(this);
+		}
+		this.VisitingBuilder.Append(")");
 	}
-	public void VisitApplyDynamicMethodNode(GtApplyDynamicMethodNode Node) {
-		this.DebugAppendNode(Node);
+	@Override public void VisitApplyDynamicMethodNode(GtApplyDynamicMethodNode Node) {
+		this.VisitingBuilder.Append(Node.FuncName);
+		this.VisitingBuilder.Append("(");
+		for(/*local*/int i = 0; i < LibGreenTea.ListSize(Node.ParamList); i++){
+			if(i > 0){
+				this.VisitingBuilder.Append(", ");
+			}
+			Node.ParamList.get(i).Evaluate(this);
+		}
+		this.VisitingBuilder.Append(")");
 	}
-	public void VisitBinaryNode(GtBinaryNode Node) {
+	@Override public void VisitBinaryNode(GtBinaryNode Node) {
 		Node.LeftNode.Evaluate(this);
 		this.VisitingBuilder.Append(Node.Token.ParsedText);
 		Node.RightNode.Evaluate(this);
 	}
-	public void VisitAndNode(GtAndNode Node) {
-		this.DebugAppendNode(Node);
+	@Override public void VisitAndNode(GtAndNode Node) {
+		Node.LeftNode.Evaluate(this);
+		this.VisitingBuilder.Append("&&");
+		Node.RightNode.Evaluate(this);
 	}
-	public void VisitOrNode(GtOrNode Node) {
-		this.DebugAppendNode(Node);
+	@Override public void VisitOrNode(GtOrNode Node) {
+		Node.LeftNode.Evaluate(this);
+		this.VisitingBuilder.Append("||");
+		Node.RightNode.Evaluate(this);
 	}
-	public void VisitAssignNode(GtAssignNode Node) {
-		this.DebugAppendNode(Node);
+	@Override public void VisitAssignNode(GtAssignNode Node) {
+		Node.LeftNode.Evaluate(this);
+		this.VisitingBuilder.Append(" = ");
+		Node.RightNode.Evaluate(this);
 	}
-	public void VisitVarNode(GtVarNode Node) {
-		this.DebugAppendNode(Node);
+	@Override public void VisitVarNode(GtVarNode Node) {
+		this.VisitingBuilder.Append(Node.NativeName);
+		this.VisitingBuilder.Append(" = ");
+		Node.InitNode.Evaluate(this);
+		Node.BlockNode.Evaluate(this);
 	}
-	public void VisitIfNode(GtIfNode Node) {
+	@Override public void VisitIfNode(GtIfNode Node) {
 		this.VisitingBuilder.Append("if(");
 		Node.CondExpr.Evaluate(this);
 		this.VisitingBuilder.Append(")");
@@ -279,35 +343,45 @@ var CLASS = (function (_super) {
 			this.VisitIndentBlock("{", Node.ElseNode, "}");
 		}
 	}
-	public void VisitSwitchNode(GtSwitchNode Node) {
+	@Override public void VisitSwitchNode(GtSwitchNode Node) {
 		this.DebugAppendNode(Node);
 	}
-	public void VisitReturnNode(GtReturnNode Node) {
+	@Override public void VisitReturnNode(GtReturnNode Node) {
 		this.VisitingBuilder.Append("return");
 		if(this.DoesNodeExist(Node.Expr)){
 			this.VisitingBuilder.Append(" ");
 			Node.Expr.Evaluate(this);
 		}
 	}
-	public void VisitBreakNode(GtBreakNode Node) {
+	@Override public void VisitBreakNode(GtBreakNode Node) {
 		this.VisitingBuilder.Append("break");
 	}
-	public void VisitContinueNode(GtContinueNode Node) {
+	@Override public void VisitContinueNode(GtContinueNode Node) {
 		this.VisitingBuilder.Append("continue");
 	}
-	public void VisitTryNode(GtTryNode Node) {
+	@Override public void VisitTryNode(GtTryNode Node) {
+		this.VisitingBuilder.Append("try");
+		this.VisitIndentBlock("{", Node.TryBlock, "}");
+		this.VisitingBuilder.Append("catch(");
+		Node.CatchExpr.Evaluate(this);
+		this.VisitingBuilder.Append(")");
+		this.VisitIndentBlock("{", Node.CatchBlock, "}");
+		this.VisitingBuilder.Append("finally");
+		this.VisitIndentBlock("{", Node.FinallyBlock, "}");
+	}
+	@Override public void VisitThrowNode(GtThrowNode Node) {
+		this.VisitingBuilder.Append("throw ");
+		Node.Expr.Evaluate(this);
+	}
+	@Override public void VisitFunctionNode(GtFunctionNode Node) {
 		this.DebugAppendNode(Node);
 	}
-	public void VisitThrowNode(GtThrowNode Node) {
-		this.DebugAppendNode(Node);
+	@Override public void VisitErrorNode(GtErrorNode Node) {
+		this.VisitingBuilder.Append("(function(){ throw new Error('");
+		this.VisitingBuilder.Append(Node.Token.ParsedText);
+		this.VisitingBuilder.Append("'); })()");
 	}
-	public void VisitFunctionNode(GtFunctionNode Node) {
-		this.DebugAppendNode(Node);
-	}
-	public void VisitErrorNode(GtErrorNode Node) {
-		this.DebugAppendNode(Node);
-	}
-	public void VisitCommandNode(GtCommandNode Node) {
+	@Override public void VisitCommandNode(GtCommandNode Node) {
 		this.DebugAppendNode(Node);
 	}
 

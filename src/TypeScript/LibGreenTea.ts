@@ -3,6 +3,8 @@ var JavaScriptGlobal: any = Function("return this")();
 
 class Iterator<T> {//FIX ME!!
 }
+class DFault {//FIX ME!!
+}
 
 interface Array {
 	get(index: number): any;
@@ -92,9 +94,10 @@ Object.defineProperty(Object.prototype, "InstanceOf", {
 interface String {
 	startsWith(key: string): boolean;
 	endsWith(key: string): boolean;
-	lastIndexOf(ch: number) : number;
-	indexOf(ch: number) : number;
-	substring(BeginIdx : number, EndIdx : number) : string;
+	lastIndexOf(ch: number): number;
+	indexOf(ch: number): number;
+	substring(BeginIdx: number, EndIdx: number): string;
+	replaceAll(pattern: string, newSubstr: string);
 }
 
 Object.defineProperty(String.prototype, "startsWith", {
@@ -118,6 +121,14 @@ Object.defineProperty(String.prototype, "equals", {
 	}
 });
 
+Object.defineProperty(String.prototype, "replaceAll", {
+	enumerable : false,
+	value : function(pattern, newSubstr) {
+		var regexp = new RegExp(pattern, "g");
+		return this.replace(regexp, newSubstr);
+	}
+});
+
 JavaScriptGlobal["GreenTeaObject"] = (function () {
     function GreenTeaObject() {
     }
@@ -126,6 +137,43 @@ JavaScriptGlobal["GreenTeaObject"] = (function () {
     };
     return GreenTeaObject;
 })();
+
+GtStaticTable["InitParserContext"] = function (Context) {
+	if(!GtStaticTable["IsInit"]) {
+		GtStaticTable.ArrayType.TypeParams = [GtStaticTable.VarType];
+		GtStaticTable.FuncType.TypeParams = [GtStaticTable.VarType];
+		GtStaticTable.IteratorType.TypeParams = [GtStaticTable.VarType];
+		
+		GtStaticTable.SetNativeTypeName("GreenTeaTopObject", GtStaticTable.TopType);
+		GtStaticTable.SetNativeTypeName("void",    GtStaticTable.VoidType);
+		GtStaticTable.SetNativeTypeName("Object",  GtStaticTable.AnyType);
+		GtStaticTable.SetNativeTypeName("Boolean", GtStaticTable.BooleanType);
+		GtStaticTable.SetNativeTypeName("Boolean", GtStaticTable.BooleanType);
+		GtStaticTable.SetNativeTypeName("Number",    GtStaticTable.IntType);
+		GtStaticTable.SetNativeTypeName("Number",    GtStaticTable.IntType);
+		GtStaticTable.SetNativeTypeName("String",  GtStaticTable.StringType);
+		GtStaticTable.SetNativeTypeName("GtType", GtStaticTable.TypeType);
+		GtStaticTable.SetNativeTypeName("GreenTeaEnum", GtStaticTable.EnumBaseType);
+		GtStaticTable.SetNativeTypeName("GreenTeaArray", GtStaticTable.ArrayType);
+		GtStaticTable.SetNativeTypeName("GreenTeaIntArray", GtStaticTable.GetGenericType1(GtStaticTable.ArrayType, GtStaticTable.IntType, true));
+		GtStaticTable.SetNativeTypeName("Number",    GtStaticTable.FloatType);
+		GtStaticTable.SetNativeTypeName("Number",  GtStaticTable.FloatType);
+		GtStaticTable.SetNativeTypeName("Object",  GtStaticTable.IteratorType);
+		GtStaticTable["IsInit"] = true;
+	}
+	Context.RootNameSpace.AppendTypeName(GtStaticTable.TopType,  null);
+	Context.RootNameSpace.AppendTypeName(GtStaticTable.VoidType,  null);
+	Context.RootNameSpace.AppendTypeName(GtStaticTable.BooleanType, null);
+	Context.RootNameSpace.AppendTypeName(GtStaticTable.IntType, null);
+	Context.RootNameSpace.AppendTypeName(GtStaticTable.FloatType, null);
+	Context.RootNameSpace.AppendTypeName(GtStaticTable.StringType, null);
+	Context.RootNameSpace.AppendTypeName(GtStaticTable.VarType, null);
+	Context.RootNameSpace.AppendTypeName(GtStaticTable.AnyType, null);
+	Context.RootNameSpace.AppendTypeName(GtStaticTable.TypeType, null);
+	Context.RootNameSpace.AppendTypeName(GtStaticTable.ArrayType, null);
+	Context.RootNameSpace.AppendTypeName(GtStaticTable.FuncType, null);
+	Context.RootNameSpace.AppendTypeName(GtStaticTable.IteratorType, null);
+};
 
 class LibLoadFunc{
 	static __LoadFunc(ParserContext: GtParserContext, Grammar: any, FuncName: string): GtFunc{

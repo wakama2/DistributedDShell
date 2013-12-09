@@ -2,7 +2,7 @@ require d2shell
 
 command ls
 
-location myhost "192.168.0.1"
+location myhost "127.0.0.1"
 
 @Export
 void main() {

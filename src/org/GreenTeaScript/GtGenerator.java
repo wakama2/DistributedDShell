@@ -613,6 +613,11 @@ public class GtGenerator extends GreenTeaUtils {
 		return null;
 	}
 
+	public String GetSourceCode() {
+		return null;
+		/*extension*/
+	}
+
 	public void FlushBuffer() {
 		/*extension*/
 	}
@@ -636,7 +641,9 @@ public class GtGenerator extends GreenTeaUtils {
 	protected final Object PopCode() {
 		/*local*/int Size = this.GeneratedCodeStack.size();
 		if(Size > 0) {
-			return this.GeneratedCodeStack.remove(Size - 1);
+			/*local*/Object content = this.GeneratedCodeStack.get(Size - 1);
+			this.GeneratedCodeStack.remove(Size - 1);
+			return content;
 		}
 		return "";
 	}

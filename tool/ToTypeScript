@@ -38,6 +38,7 @@ source="${source} ScalaSourceGenerator"
 source="${source} KonohaGrammar"
 source="${source} GreenTeaScript"
 source="${source} GtSourceBuilder"
+source="${source} DShellGrammar"
 #
 ts=""
 
@@ -48,10 +49,9 @@ done
 
 perl src/TypeScript/PackLibraries.pl lib > ${build}GreenTeaLibraries.ts
 ts="${ts} ${build}GreenTeaLibraries.ts"
-ts="${build}LibGreenTea.ts ${ts}"
+ts2="${build}LibGreenTea.ts ${ts}"
 
-cat ${ts} > ${build}GreenTea.ts
+cat ${ts2} > ${build}GreenTea.ts
 
 tsc ${build}GreenTea.ts
-#tsc ${build}/LibGreenTea.ts ${ts}
-
+rm ${ts}
