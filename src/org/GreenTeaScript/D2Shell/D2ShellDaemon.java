@@ -41,7 +41,7 @@ public class D2ShellDaemon {
 	}
 	
 	public void waitConnectionLoop() throws IOException {
-		ServerSocket ss = D2ShellSocketFactory.getServerSocketFactory().createServerSocket(this.port);
+		ServerSocket ss = D2ShellSocketFactory.getDefaultServerSocketFactory().createServerSocket(this.port);
 		while(true) {
 			final Socket socket = ss.accept();
 			Thread th = new Thread() {

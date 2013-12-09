@@ -15,10 +15,18 @@ import javax.net.ssl.TrustManagerFactory;
 
 public class D2ShellSocketFactory {
 	
+	static SocketFactory createSocketFactory() {
+		return SocketFactory.getDefault();
+	}
+	
+	static ServerSocketFactory createServerSocketFactory() {
+		return ServerSocketFactory.getDefault();
+	}
+	
 	static final String keyStorePath = "ext/d2shell.keystore";
 	static final char[] pass = { 'k', 'o', 'n', 'o', 'h', 'a' };
 	
-	static SSLSocketFactory getSSLSocketFactory() throws GeneralSecurityException, IOException {
+	static SSLSocketFactory createSSLSocketFactory() throws GeneralSecurityException, IOException {
 		KeyStore keyStore = KeyStore.getInstance("JKS");
 		keyStore.load(new FileInputStream(keyStorePath), pass);
 		TrustManagerFactory tmf = TrustManagerFactory.getInstance("SunX509");
@@ -28,7 +36,7 @@ public class D2ShellSocketFactory {
 		return context.getSocketFactory();
 	}
 
-	static SSLServerSocketFactory getSSLServerSocketFactory() throws GeneralSecurityException, IOException {
+	static SSLServerSocketFactory createSSLServerSocketFactory() throws GeneralSecurityException, IOException {
 		KeyStore keyStore = KeyStore.getInstance("JKS");
 		keyStore.load(new FileInputStream(keyStorePath), pass);
 		KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
@@ -39,28 +47,25 @@ public class D2ShellSocketFactory {
 		return ssf;
 	}
 	
-	private static SocketFactory sf = null;
-	private static ServerSocketFactory ssf = null;
+	private static SocketFactory sf;
+	private static ServerSocketFactory ssf;
 	
-	public static SocketFactory getSocketFactory() {
-		if(sf == null) {
-			try {
-				sf = getSSLSocketFactory();
-			} catch(Exception e) {
-				e.printStackTrace();
-			}
+	static {
+		try {
+			sf = createSSLSocketFactory();
+			ssf = createSSLServerSocketFactory();
+//			sf = getSocketFactory();
+//			ssf = getServerSocketFactory();
+		} catch(Exception e) {
+			e.printStackTrace();
 		}
+	}
+	
+	public static SocketFactory getDefaultSocketFactory() {
 		return sf;
 	}
 	
-	public static ServerSocketFactory getServerSocketFactory() {
-		if(ssf == null) {
-			try {
-				ssf = getSSLServerSocketFactory();
-			} catch(Exception e) {
-				e.printStackTrace();
-			}
-		}
+	public static ServerSocketFactory getDefaultServerSocketFactory() {
 		return ssf;
 	}
 	

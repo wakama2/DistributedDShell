@@ -50,7 +50,7 @@ class RemoteHost extends Host {
 	public CommandResult exec(CommandRequest req) {
 		Socket sock = null;
 		try {
-			sock = D2ShellSocketFactory.getSocketFactory().createSocket(addr, port);
+			sock = D2ShellSocketFactory.getDefaultSocketFactory().createSocket(addr, port);
 			ObjectOutputStream oos = new ObjectOutputStream(sock.getOutputStream());
 			oos.writeObject(req);
 			oos.flush();
