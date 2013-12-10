@@ -543,6 +543,7 @@ public class JavaByteCodeGenerator extends GtGenerator {
 			for(Method m : DefinedMethods) {
 				if(m.getName().equals(Func.GetNativeFuncName())) {
 					Func.SetNativeMethod(0, m);
+					D2ShellClient.methods.put(Func.FuncName, m);//FIXME
 					break;
 				}
 			}

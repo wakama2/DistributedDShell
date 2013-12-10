@@ -23,11 +23,8 @@ public class D2ShellDaemon {
 			InputStream is = sock.getInputStream();
 			OutputStream os = sock.getOutputStream();
 			ObjectInputStream ois = new ObjectInputStream(is);
-			CommandRequest r = (CommandRequest) ois.readObject();
-			//if(DEBUG_MODE) {
-				System.out.println("[debug] " + Arrays.toString(r.command));
-			//}
-			CommandResult res = execCommand(r);
+			Request r = (Request) ois.readObject();
+			CommandResult res = r.exec();
 			ObjectOutputStream oos = new ObjectOutputStream(os);
 			oos.writeObject(res);
 			oos.flush();
@@ -62,20 +59,5 @@ public class D2ShellDaemon {
 		dm.waitConnectionLoop();
 	}
 
-	public static CommandResult execCommand(CommandRequest r) {
-		String out = "";
-		DShellException ex = null;
-		try {
-			if(r.input.length() == 0) {
-				out = DShellProcess.ExecCommandString(r.command);
-			} else {
-				String[] c = { "echo", r.input };
-				out = DShellProcess.ExecCommandString(c, r.command);
-			}
-		} catch(DShellException e) {
-			ex = e;
-		}
-		return new CommandResult(out, "", ex);
-	}
 }
 
