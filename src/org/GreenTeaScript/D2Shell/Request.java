@@ -69,7 +69,7 @@ class ScriptRequest implements Request, Serializable {
 		for(int i=0; i<argTypes.length; i++) {
 			argTypes[i] = this.args.getClass();
 		}
-		Object res = null;
+		Object res = "";
 		DShellException ex = null;
 		try {
 			Class<?> klass = cl.loadClass(cname);
@@ -80,7 +80,6 @@ class ScriptRequest implements Request, Serializable {
 		} catch(Exception e) {
 			e.printStackTrace();
 		}
-		String out = res != null ? res.toString() : "";
-		return new CommandResult(out, "", ex);
+		return new CommandResult(res, "", ex);
 	}
 }

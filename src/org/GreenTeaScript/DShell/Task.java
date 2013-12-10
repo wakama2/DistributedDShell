@@ -119,8 +119,10 @@ public class Task extends org.GreenTeaScript.D2Shell.Task {
 		}
 	}
 
-	@Override
-	public String getOutput() {
+	@Override public String getOutput() {
+		return this.getOutMessage();
+	}
+	@Override public String getResult() {
 		return this.getOutMessage();
 	}
 }

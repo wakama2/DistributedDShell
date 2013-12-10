@@ -59,7 +59,7 @@ public class D2ShellClient {
 			if(res.exception != null) {
 				throw res.exception;
 			}
-			in = res.out;
+			in = res.out.toString();
 		}
 	}
 
@@ -74,9 +74,9 @@ public class D2ShellClient {
 			if(res.exception != null) {
 				throw res.exception;
 			}
-			in = res.out;
+			in = res.out.toString();
 		}
-		return res.out;
+		return res.out.toString();
 	}
 
 	public static boolean ExecCommandBool(String[]... cmds) {
@@ -85,18 +85,28 @@ public class D2ShellClient {
 	
 	static class D2Task extends Task {
 		boolean finish = false;
-		String output = "";
+		Object result = "";
 		DShellException exception;
 		
-		public String getOutput() {
-			return this.output;
+		public Object getResult() {
+			return this.result;
 		}
 		
-		public void join() {
+		public String getOutput() {
+			return this.result.toString();
+		}
+		
+		public String getErr() {
+			return "";//FIXME
+		}
+		
+		public void join() throws DShellException {
 			synchronized(this) {
-				while(!this.finish) {
-					try {this.wait();} catch(Exception e) {}
-				}
+				try {
+					while(!this.finish) {
+						this.wait();
+					}
+				} catch(InterruptedException e) {}
 			}
 			if(this.exception != null) {
 				throw this.exception;
@@ -106,10 +116,31 @@ public class D2ShellClient {
 
 	public static Task ExecCommandTask(final String[]... cmds) {
 		final D2Task task = new D2Task();
+		// FIXME: remote method invocation
+		if(cmds.length == 1 && cmds[0].length >= 2) {
+			final Method m = methods.get(cmds[0][1]);
+			if(m != null) {
+				final String host = cmds[0][0];
+				final String cname = m.getDeclaringClass().getName();
+				Thread th = new Thread() {
+					public void run() {
+						CommandResult res = Exec(host, new ScriptRequest(byteCodeMap.get(cname),
+								cname, m.getName(), new Object[0]));
+						task.result = res.out;
+						synchronized(task) {
+							task.finish = true;
+							task.notifyAll();
+						}
+					}
+				};
+				th.start();
+				return task;
+			}
+		}
 		final Thread th = new Thread(new Runnable() {
 			public void run() {
 				try {
-					task.output = ExecCommandString(cmds);
+					task.result = ExecCommandString(cmds);
 				} catch(DShellException e) {
 					task.exception = e;
 				}
