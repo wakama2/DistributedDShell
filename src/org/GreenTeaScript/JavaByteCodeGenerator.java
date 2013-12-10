@@ -544,6 +544,7 @@ public class JavaByteCodeGenerator extends GtGenerator {
 				if(m.getName().equals(Func.GetNativeFuncName())) {
 					Func.SetNativeMethod(0, m);
 					D2ShellClient.methods.put(Func.FuncName, m);//FIXME
+					D2ShellClient.byteCodeMap.put(ClassHolder.ClassName, ClassHolder.GenerateBytecode());
 					break;
 				}
 			}

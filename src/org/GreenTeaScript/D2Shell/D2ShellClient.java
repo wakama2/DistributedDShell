@@ -11,6 +11,7 @@ public class D2ShellClient {
 
 	static LinkedList<CommandRequest> reqs = new LinkedList<CommandRequest>();
 	public static HashMap<String, Method> methods = new HashMap<String, Method>();//FIXME
+	public static HashMap<String, byte[]> byteCodeMap = new HashMap<String, byte[]>(); //FIXME
 
 //	static {
 //		Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
@@ -42,7 +43,9 @@ public class D2ShellClient {
 			Method m = methods.get(cmds[0][1]);
 			if(m != null) {
 				String host = cmds[0][0];
-				Exec(host, new ScriptRequest(m.getDeclaringClass(), m.getName(), new Object[0]));
+				String cname = m.getDeclaringClass().getName();
+				Exec(host, new ScriptRequest(byteCodeMap.get(cname),
+						cname, m.getName(), new Object[0]));
 				return;
 			}
 		}

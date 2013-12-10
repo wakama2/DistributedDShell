@@ -45,18 +45,26 @@ class CommandRequest implements Request, Serializable {
 class ScriptRequest implements Request, Serializable {
 	private static final long serialVersionUID = 4280102515448720707L;
 	
-	public Class<?> klass;
-	public String funcname;
+	public byte[] bytecode;
+	public String cname;
+	public String fname;
 	public Object[] args = new Object[0];
 	
-	public ScriptRequest(Class<?> klass, String funcname, Object[] args) {
-		this.klass = klass;
-		this.funcname = funcname;
+	public ScriptRequest(byte[] bytecode, String cname, String funcname, Object[] args) {
+		this.bytecode = bytecode;
+		this.cname = cname;
+		this.fname = funcname;
 		this.args = args;
 	}
 	
 	@Override
 	public CommandResult exec() {
+		ClassLoader cl = new ClassLoader() {
+			@Override protected Class<?> findClass(String name) {
+				if(cname.equals(name)) return this.defineClass(name, bytecode, 0, bytecode.length);
+				return null;
+			}
+		};
 		Class<?>[] argTypes = new Class<?>[this.args.length];
 		for(int i=0; i<argTypes.length; i++) {
 			argTypes[i] = this.args.getClass();
@@ -64,7 +72,8 @@ class ScriptRequest implements Request, Serializable {
 		Object res = null;
 		DShellException ex = null;
 		try {
-			Method m = this.klass.getMethod(funcname, argTypes);
+			Class<?> klass = cl.loadClass(cname);
+			Method m = klass.getMethod(fname, argTypes);
 			res = m.invoke(null, args);
 		} catch(DShellException e) {
 			ex = e;
