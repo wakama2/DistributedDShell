@@ -35,7 +35,6 @@ import java.util.HashMap;
 import java.util.Stack;
 
 import org.GreenTeaScript.D2Shell.D2ShellClient;
-import org.GreenTeaScript.DShell.DShellProcess;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;

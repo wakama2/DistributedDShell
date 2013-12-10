@@ -1,6 +1,5 @@
 package org.GreenTeaScript.D2Shell;
 
-import java.io.*;
 import java.lang.reflect.Method;
 import java.util.*;
 

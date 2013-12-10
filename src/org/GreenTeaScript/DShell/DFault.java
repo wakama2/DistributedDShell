@@ -23,6 +23,7 @@
 // **************************************************************************
 
 package org.GreenTeaScript.DShell;
+import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.InetAddress;
@@ -32,8 +33,8 @@ import org.GreenTeaScript.GtFunc;
 
 import org.GreenTeaScript.LibGreenTea;
 
-public class DFault /*extends Exception*/ {
-//	private static final long serialVersionUID = -6178247864604881183L;
+public class DFault /*extends Exception*/ implements Serializable {
+	private static final long serialVersionUID = -6178247864604881183L;
 	public String Location;
 	public String PhysicalLocation;
 	public String FaultInfo;

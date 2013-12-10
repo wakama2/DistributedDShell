@@ -1,6 +1,5 @@
 package org.GreenTeaScript.D2Shell;
 
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.GeneralSecurityException;
