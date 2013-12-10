@@ -4,7 +4,7 @@ import java.lang.reflect.Method;
 import java.util.*;
 
 import org.GreenTeaScript.DShell.DShellException;
-import org.GreenTeaScript.D2Shell.Task;
+import org.GreenTeaScript.DShell.Task;
 
 public class D2ShellClient {
 
@@ -92,14 +92,6 @@ public class D2ShellClient {
 			return this.result;
 		}
 		
-		public String getOutput() {
-			return this.result.toString();
-		}
-		
-		public String getErr() {
-			return "";//FIXME
-		}
-		
 		public void join() throws DShellException {
 			synchronized(this) {
 				try {
@@ -111,6 +103,28 @@ public class D2ShellClient {
 			if(this.exception != null) {
 				throw this.exception;
 			}
+		}
+
+		@Override
+		public void join(long timeout) {
+			// TODO Auto-generated method stub
+		}
+
+		@Override
+		public String getOutMessage() {
+			return this.result.toString();
+		}
+
+		@Override
+		public String getErrorMessage() {
+			// TODO Auto-generated method stub
+			return "";
+		}
+
+		@Override
+		public int getExitStatus() {
+			// TODO Auto-generated method stub
+			return 0;
 		}
 	}
 
@@ -134,6 +148,9 @@ public class D2ShellClient {
 					}
 				};
 				th.start();
+				if(!cmds[0][cmds[0].length-1].equals("&")) {
+					task.join();
+				}
 				return task;
 			}
 		}

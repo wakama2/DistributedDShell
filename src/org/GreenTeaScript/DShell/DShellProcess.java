@@ -82,7 +82,7 @@ public class DShellProcess {
 	}
 
 	public Object Invoke() {
-		Task task = new Task(this);
+		Task task = new TaskImpl(this);
 		if(is(this.OptionFlag, background)) {
 			return (this.retType == TaskType) && is(this.OptionFlag, returnable) ? task : null;
 		}

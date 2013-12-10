@@ -14,7 +14,17 @@ import java.util.EmptyStackException;
 import java.util.Stack;
 import java.util.regex.Pattern;
 
-public class Task extends org.GreenTeaScript.D2Shell.Task {
+public abstract class Task {
+	public abstract void join();
+	public abstract void join(long timeout);
+	public abstract Object getResult();
+	
+	public abstract String getOutMessage();
+	public abstract String getErrorMessage();
+	public abstract int getExitStatus();
+}
+
+class TaskImpl extends Task {
 	private ProcMonitor monitor;
 	private DShellProcess dshellProc;
 	private boolean terminated = false;
@@ -25,7 +35,7 @@ public class Task extends org.GreenTeaScript.D2Shell.Task {
 	private String stderrMessage;
 	private StringBuilder sBuilder;
 
-	public Task(DShellProcess dshellProc) {
+	public TaskImpl(DShellProcess dshellProc) {
 		this.dshellProc = dshellProc;
 		// start task
 		int OptionFlag = this.dshellProc.getOptionFlag();
@@ -119,9 +129,6 @@ public class Task extends org.GreenTeaScript.D2Shell.Task {
 		}
 	}
 
-	@Override public String getOutput() {
-		return this.getOutMessage();
-	}
 	@Override public String getResult() {
 		return this.getOutMessage();
 	}

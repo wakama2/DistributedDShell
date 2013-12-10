@@ -141,7 +141,7 @@ public class DShellGrammar extends GreenTeaUtils {
 		return "__$" + Symbol;
 	}
 
-	private static void AppendCommand(GtNameSpace NameSpace, String CommandPath, GtToken SourceToken) {
+	static void AppendCommand(GtNameSpace NameSpace, String CommandPath, GtToken SourceToken) {
 		if(CommandPath.length() > 0) {
 			/*local*/int loc = CommandPath.lastIndexOf('/');
 			/*local*/String Command = CommandPath;
