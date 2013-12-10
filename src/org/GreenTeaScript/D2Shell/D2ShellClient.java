@@ -43,8 +43,7 @@ public class D2ShellClient {
 			if(m != null) {
 				String host = cmds[0][0];
 				String cname = m.getDeclaringClass().getName();
-				Exec(host, new ScriptRequest(byteCodeMap.get(cname),
-						cname, m.getName(), new Object[0]));
+				Exec(host, new ScriptRequest(byteCodeMap, cname, m.getName(), new Object[0]));
 				return;
 			}
 		}
@@ -138,7 +137,7 @@ public class D2ShellClient {
 				final String cname = m.getDeclaringClass().getName();
 				Thread th = new Thread() {
 					public void run() {
-						CommandResult res = Exec(host, new ScriptRequest(byteCodeMap.get(cname),
+						CommandResult res = Exec(host, new ScriptRequest(byteCodeMap,
 								cname, m.getName(), new Object[0]));
 						task.result = res.out;
 						synchronized(task) {

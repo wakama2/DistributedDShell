@@ -3,15 +3,16 @@ package org.GreenTeaScript.D2Shell;
 import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.util.Arrays;
+import java.util.Map;
 
 import org.GreenTeaScript.DShell.DShellException;
 import org.GreenTeaScript.DShell.DShellProcess;
 
-public interface Request {
-	public CommandResult exec();
+public abstract class Request {
+	public abstract CommandResult exec();
 }
 
-class CommandRequest implements Request, Serializable {
+class CommandRequest extends Request implements Serializable {
 	private static final long serialVersionUID = -3762794483693239635L;
 	
 	public String[] command;
@@ -42,29 +43,34 @@ class CommandRequest implements Request, Serializable {
 	}
 }
 
-class ScriptRequest implements Request, Serializable {
+class ScriptRequest extends Request implements Serializable {
 	private static final long serialVersionUID = 4280102515448720707L;
 	
-	public byte[] bytecode;
+	public Map<String, byte[]> bcmap;
 	public String cname;
 	public String fname;
 	public Object[] args = new Object[0];
 	
-	public ScriptRequest(byte[] bytecode, String cname, String funcname, Object[] args) {
-		this.bytecode = bytecode;
+	public ScriptRequest(Map<String, byte[]> bcmap, String cname, String funcname, Object[] args) {
+		this.bcmap = bcmap;
 		this.cname = cname;
 		this.fname = funcname;
 		this.args = args;
 	}
 	
+	class RemoteClassLoader extends ClassLoader {
+		@Override protected Class<?> findClass(String name) {
+			byte[] bytecode = bcmap.get(name);
+			if(bytecode != null) {
+				return this.defineClass(name, bytecode, 0, bytecode.length);
+			}
+			return null;
+		}
+	}
+	
 	@Override
 	public CommandResult exec() {
-		ClassLoader cl = new ClassLoader() {
-			@Override protected Class<?> findClass(String name) {
-				if(cname.equals(name)) return this.defineClass(name, bytecode, 0, bytecode.length);
-				return null;
-			}
-		};
+		ClassLoader cl = new RemoteClassLoader();
 		Class<?>[] argTypes = new Class<?>[this.args.length];
 		for(int i=0; i<argTypes.length; i++) {
 			argTypes[i] = this.args.getClass();
