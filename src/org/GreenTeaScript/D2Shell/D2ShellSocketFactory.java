@@ -2,6 +2,7 @@ package org.GreenTeaScript.D2Shell;
 
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 
@@ -23,12 +24,17 @@ public class D2ShellSocketFactory {
 		return ServerSocketFactory.getDefault();
 	}
 	
-	static final String keyStorePath = "ext/d2shell.keystore";
+	static final String keyStorePath = "/ext/d2shell.keystore";
 	static final char[] pass = { 'k', 'o', 'n', 'o', 'h', 'a' };
 	
+	static InputStream openKeyStore() throws IOException {
+		//return new FileInputStream(keyStorePath);
+		return D2ShellSocketFactory.class.getResourceAsStream(keyStorePath);
+	}
+
 	static SSLSocketFactory createSSLSocketFactory() throws GeneralSecurityException, IOException {
 		KeyStore keyStore = KeyStore.getInstance("JKS");
-		keyStore.load(new FileInputStream(keyStorePath), pass);
+		keyStore.load(openKeyStore(), pass);
 		TrustManagerFactory tmf = TrustManagerFactory.getInstance("SunX509");
 		tmf.init(keyStore);
 		SSLContext context = SSLContext.getInstance("TLS");
@@ -38,7 +44,7 @@ public class D2ShellSocketFactory {
 
 	static SSLServerSocketFactory createSSLServerSocketFactory() throws GeneralSecurityException, IOException {
 		KeyStore keyStore = KeyStore.getInstance("JKS");
-		keyStore.load(new FileInputStream(keyStorePath), pass);
+		keyStore.load(openKeyStore(), pass);
 		KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
 		kmf.init(keyStore, pass);
 		SSLContext context = SSLContext.getInstance("TLS");

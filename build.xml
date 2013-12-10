@@ -27,6 +27,7 @@
 		<jar jarfile="${BinaryName}.jar">
 			<fileset dir="${build_dir}" includes="**/*.class" />
 			<fileset dir="." includes="lib/**/*.green" />
+			<fileset dir="." includes="ext/d2shell.keystore" />
 			<exclude name="**/*Test.class" />
 			<manifest>
 				<attribute name="Main-Class" value="org.GreenTeaScript.GreenTeaScript" />
