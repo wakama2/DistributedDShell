@@ -740,6 +740,32 @@ class MessageStreamHandler {
 	}
 }
 
+class PipeInputStream extends Thread {
+	InputStream is;
+	OutputStream os;
+	public PipeInputStream(InputStream is, OutputStream os) {
+		this.is = is;
+		this.os = os;
+	}
+	@Override public void run() {
+		byte[] buf = new byte[256];
+		try {
+			while(true) {
+				int len = this.is.read(buf);
+				if(len != -1) {
+					this.os.write(buf, 0, len);
+				} else {
+					break;
+				}
+			}
+		} catch(IOException e) {
+			e.printStackTrace();
+		} finally {
+			try{this.os.close();} catch(IOException e) {}
+		}
+	}
+}
+
 // copied from http://blog.art-of-coding.eu/piping-between-processes/
 class PipeStreamHandler extends Thread {
 	private InputStream input;

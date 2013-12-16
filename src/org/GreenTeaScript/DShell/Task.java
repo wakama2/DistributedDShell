@@ -14,6 +14,8 @@ import java.util.EmptyStackException;
 import java.util.Stack;
 import java.util.regex.Pattern;
 
+import org.GreenTeaScript.D2Shell.D2ShellClient;
+
 public abstract class Task {
 	public abstract void join();
 	public abstract void join(long timeout);
@@ -46,7 +48,7 @@ class TaskImpl extends Task {
 
 		OutputStream stdoutStream = null;
 		if(DShellProcess.is(OptionFlag, DShellProcess.printable)) {
-			stdoutStream = System.out;
+			stdoutStream = D2ShellClient.getStreamSet().out;
 		}
 		InputStream[] srcOutStreams = new InputStream[1];
 		InputStream[] srcErrorStreams = new InputStream[ProcessSize];
@@ -58,6 +60,8 @@ class TaskImpl extends Task {
 		}
 
 		// Start Message Handler
+		// stdin
+		new PipeInputStream(D2ShellClient.getStreamSet().in, Processes[0].stdin).start();
 		// stdout
 		srcOutStreams[0] = lastProc.accessOutStream();
 		this.stdoutHandler = new MessageStreamHandler(srcOutStreams, stdoutStream);
@@ -66,7 +70,7 @@ class TaskImpl extends Task {
 		for(int i = 0; i < ProcessSize; i++) {
 			srcErrorStreams[i] = Processes[i].accessErrorStream();
 		}
-		this.stderrHandler = new MessageStreamHandler(srcErrorStreams, System.err);
+		this.stderrHandler = new MessageStreamHandler(srcErrorStreams, D2ShellClient.getStreamSet().err);
 		this.stderrHandler.showMessage();
 		// start monitor
 		this.isAsyncTask = DShellProcess.is(this.dshellProc.getOptionFlag(), DShellProcess.background);
@@ -162,7 +166,7 @@ class ProcMonitor extends Thread {	// TODO: support exit handle
 					}
 					msgBuilder.append(processes[i].getCmdName());
 				}
-				System.err.println(msgBuilder.toString());
+				D2ShellClient.getStreamSet().err.print(msgBuilder.toString());
 				// run exit handler
 			} 
 			catch (InterruptedException e) {
@@ -196,7 +200,7 @@ class ProcMonitor extends Thread {	// TODO: support exit handle
 					}
 					msgBuilder.append(processes[i].getCmdName());
 				}
-				System.err.println(msgBuilder.toString());
+				D2ShellClient.getStreamSet().err.print(msgBuilder.toString());
 				// run exit handler
 				return;
 			}

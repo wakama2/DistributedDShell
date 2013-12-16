@@ -1,5 +1,9 @@
 package org.GreenTeaScript.D2Shell;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.PrintStream;
 import java.lang.reflect.Method;
 import java.util.*;
 
@@ -49,7 +53,7 @@ public class D2ShellClient {
 		}
 		
 		String in = "";
-		CommandResult res;
+		CommandResult res = null;
 		for(String[] cmd : cmds) {
 			String host = cmd[0];
 			if(host.equals("&")) break;//FIXME
@@ -60,6 +64,7 @@ public class D2ShellClient {
 			}
 			in = res.out.toString();
 		}
+		D2ShellClient.getStreamSet().out.print(res.out);
 	}
 
 	public static String ExecCommandString(String[]... cmds) {
@@ -169,8 +174,26 @@ public class D2ShellClient {
 		th.start();
 		return task;
 	}
-
+	
+	public static class LocalInfo {
+		public InputStream in = System.in;
+		public PrintStream out = System.out;
+		public PrintStream err = System.err;
+		public boolean daemon_mode = true;
+	}
+	
+	private static ThreadLocal<LocalInfo> streamInfo = new ThreadLocal<LocalInfo>() {
+		@Override protected LocalInfo initialValue() {
+			return new LocalInfo();
+		}
+	};
+	
+	public static LocalInfo getStreamSet() { return streamInfo.get(); }
+	
+	public static boolean isDaemonMode() { return streamInfo.get().daemon_mode; }
+	
 	public static void startup() {
+		streamInfo.get().daemon_mode = false;
 	}
 
 	public static void shutdown() {

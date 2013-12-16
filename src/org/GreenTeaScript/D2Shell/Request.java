@@ -1,5 +1,9 @@
 package org.GreenTeaScript.D2Shell;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.io.PrintStream;
 import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.util.Arrays;
@@ -24,20 +28,26 @@ class CommandRequest extends Request implements Serializable {
 	}
 	
 	public CommandResult exec() {
-		//if(DEBUG_MODE) {
+		if(D2ShellClient.isDaemonMode()) {
 			System.out.println("[debug] " + Arrays.toString(this.command));
-		//}
+		}
 		String out = "";
 		DShellException ex = null;
+		InputStream in0 = D2ShellClient.getStreamSet().in;
+		PrintStream out0 = D2ShellClient.getStreamSet().out;
 		try {
-			if(this.input.length() == 0) {
-				out = DShellProcess.ExecCommandString(this.command);
-			} else {
-				String[] c = { "echo", this.input };//FIXME use InputStream
-				out = DShellProcess.ExecCommandString(c, this.command);
-			}
+			//System.out.println("** in:" + this.input);
+			ByteArrayOutputStream os = new ByteArrayOutputStream();
+			D2ShellClient.getStreamSet().out = new PrintStream(os);
+			D2ShellClient.getStreamSet().in = new ByteArrayInputStream(this.input.getBytes());
+			DShellProcess.ExecCommandVoid(this.command);
+			out = os.toString();
+			//System.out.println("** out:" + out);
 		} catch(DShellException e) {
 			ex = e;
+		} finally {
+			D2ShellClient.getStreamSet().in = in0;
+			D2ShellClient.getStreamSet().out = out0;
 		}
 		return new CommandResult(out, "", ex);
 	}
@@ -70,6 +80,9 @@ class ScriptRequest extends Request implements Serializable {
 	
 	@Override
 	public CommandResult exec() {
+		if(D2ShellClient.isDaemonMode()) {
+			System.out.println("[debug] " + this.cname+"."+this.fname);
+		}
 		ClassLoader cl = new RemoteClassLoader();
 		Class<?>[] argTypes = new Class<?>[this.args.length];
 		for(int i=0; i<argTypes.length; i++) {
