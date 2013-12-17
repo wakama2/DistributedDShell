@@ -16,20 +16,21 @@ public class D2ShellDaemon {
 
 	public void accept(Socket sock) {
 		try {
-			InputStream is = sock.getInputStream();
-			OutputStream os = sock.getOutputStream();
-			ObjectInputStream ois = new ObjectInputStream(is);
-			Request r = (Request) ois.readObject();
+			D2ShellProtocol.Server sv = new D2ShellProtocol.Server(sock);
+			Request r = sv.req;
+
+			// change thread-local stream
+			D2ShellClient.getStreamSet().in = sv.stdin;
+			D2ShellClient.getStreamSet().out = sv.stdout;
+			D2ShellClient.getStreamSet().err = sv.stderr;
+
 			CommandResult res = r.exec();
-			ObjectOutputStream oos = new ObjectOutputStream(os);
-			oos.writeObject(res);
-			oos.flush();
-		} catch(ClassNotFoundException e) {
+			if(res.exception != null) {
+				sv.sendException(res.exception);
+			}
+			sv.flush();
+		} catch(ClassNotFoundException | IOException e) {
 			e.printStackTrace();
-		} catch(IOException e) {
-			e.printStackTrace();
-		} finally {
-			try { sock.close(); } catch(IOException e) {}
 		}
 	}
 	
@@ -40,6 +41,11 @@ public class D2ShellDaemon {
 			Thread th = new Thread() {
 				public void run() {
 					accept(socket);
+					try {
+						socket.close();
+					} catch(IOException e) {
+						e.printStackTrace();
+					}
 				}
 			};
 			th.start();

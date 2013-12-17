@@ -2,7 +2,6 @@ package org.GreenTeaScript.D2Shell;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.PrintStream;
 import java.lang.reflect.Method;
 import java.util.*;
@@ -176,7 +175,12 @@ public class D2ShellClient {
 	}
 	
 	public static class LocalInfo {
-		public InputStream in = System.in;
+//		public InputStream in = System.in;
+		public InputStream in = new InputStream() {
+			@Override public int read() throws IOException {
+				return -1;
+			}
+		};
 		public PrintStream out = System.out;
 		public PrintStream err = System.err;
 		public boolean daemon_mode = true;

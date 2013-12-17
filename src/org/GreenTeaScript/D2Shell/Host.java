@@ -1,9 +1,10 @@
 package org.GreenTeaScript.D2Shell;
 
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.net.Socket;
+
+import javax.net.SocketFactory;
+
 
 public abstract class Host {
 	
@@ -34,34 +35,31 @@ public abstract class Host {
 			return new HostGroup(hosts);
 		}
 	}
-
 }
 
 class RemoteHost extends Host {
 	private final String addr;
 	private final int port;
+	private final SocketFactory sf;
 	
 	public RemoteHost(String addr, int port) {
+		this(addr, port, D2ShellSocketFactory.getDefaultSocketFactory());
+	}
+	
+	public RemoteHost(String addr, int port, SocketFactory sf) {
 		this.addr = addr;
 		this.port = port;
+		this.sf = sf;
 	}
 
 	@Override
 	public CommandResult exec(Request req) {
-		Socket sock = null;
-		try {
-			sock = D2ShellSocketFactory.getDefaultSocketFactory().createSocket(addr, port);
-			ObjectOutputStream oos = new ObjectOutputStream(sock.getOutputStream());
-			oos.writeObject(req);
-			oos.flush();
-			ObjectInputStream ois = new ObjectInputStream(sock.getInputStream());
-			return (CommandResult) ois.readObject();
+		try(Socket sock = this.sf.createSocket(addr, port)) {
+			D2ShellProtocol.Client p = new D2ShellProtocol.Client(sock, req, D2ShellClient.getStreamSet().in);
+			p.run();
+			return new CommandResult("", "", p.exception);
 		} catch(IOException e) {
 			e.printStackTrace();
-		} catch(ClassNotFoundException e) {
-			e.printStackTrace();
-		} finally {
-			try { if(sock!=null) sock.close(); } catch(IOException e) {}
 		}
 		return null;
 	}
