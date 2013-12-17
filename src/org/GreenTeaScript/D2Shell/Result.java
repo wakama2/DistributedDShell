@@ -4,18 +4,14 @@ import java.io.Serializable;
 
 import org.GreenTeaScript.DShell.DShellException;
 
-public class CommandResult implements Serializable {
-
+public class Result implements Serializable {
 	private static final long serialVersionUID = 200L;
 
-	public Object out;//FIXME
-	public String err;
+	public Object out; // exit status or return value
 	public DShellException exception;
 	
-	public CommandResult(Object out, String err, DShellException exception) {
+	public Result(Object out, DShellException exception) {
 		this.out = out;
-		this.err = err;
 		this.exception = exception;
 	}
-
 }

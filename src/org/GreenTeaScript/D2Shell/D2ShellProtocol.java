@@ -13,7 +13,7 @@ import org.GreenTeaScript.DShell.DShellException;
 class D2ShellProtocol {
 	static final int HEAD_STDOUT = 1;//FIXME
 	static final int HEAD_STDERR = 2;
-	static final int HEAD_EXCEPTION = 3;
+	static final int HEAD_RESULT = 3;
 	
 	public static class Client {
 		Socket socket;
@@ -29,7 +29,8 @@ class D2ShellProtocol {
 			this.stdin = stdin;
 		}
 		
-		public void run() {
+		public Result run() {
+			Result res = null;
 			try {
 				// send request
 				ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
@@ -50,8 +51,8 @@ class D2ShellProtocol {
 						stdout.write(in.read());
 					} else if(header == HEAD_STDERR) {
 						stderr.write(in.read());
-					} else if(header == HEAD_EXCEPTION) {
-						this.exception = (DShellException) in.readObject();
+					} else if(header == HEAD_RESULT) {
+						res = (Result) in.readObject();
 					} else {
 						break;
 					}
@@ -64,6 +65,7 @@ class D2ShellProtocol {
 			} catch(IOException | ClassNotFoundException e) {
 				e.printStackTrace();
 			}
+			return res;
 		}
 	}
 	
@@ -114,9 +116,9 @@ class D2ShellProtocol {
 			}
 		}
 		
-		public void sendException(DShellException e) throws IOException {
+		public void sendResult(Result e) throws IOException {
 			synchronized(os) {
-				os.write(HEAD_EXCEPTION);
+				os.write(HEAD_RESULT);
 				os.writeObject(e);
 				os.flush();
 			}

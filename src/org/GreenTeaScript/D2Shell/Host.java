@@ -8,7 +8,7 @@ import javax.net.SocketFactory;
 
 public abstract class Host {
 	
-	public abstract CommandResult exec(Request req) ;
+	public abstract Result exec(Request req) ;
 	
 	public static Host create(String addr, int port) {
 		return new RemoteHost(addr, port);
@@ -53,11 +53,10 @@ class RemoteHost extends Host {
 	}
 
 	@Override
-	public CommandResult exec(Request req) {
+	public Result exec(Request req) {
 		try(Socket sock = this.sf.createSocket(addr, port)) {
 			D2ShellProtocol.Client p = new D2ShellProtocol.Client(sock, req, D2ShellClient.getStreamSet().in);
-			p.run();
-			return new CommandResult("", "", p.exception);
+			return p.run();
 		} catch(IOException e) {
 			e.printStackTrace();
 		}
@@ -73,8 +72,8 @@ class HostGroup extends Host {
 	}
 	
 	@Override
-	public CommandResult exec(Request req) {
-		CommandResult res = null;
+	public Result exec(Request req) {
+		Result res = null;
 		String out = "";
 		for(Host host : hosts) {
 			res = host.exec(req);
@@ -87,7 +86,7 @@ class HostGroup extends Host {
 
 class LocalHost extends Host {
 	@Override
-	public CommandResult exec(Request r) {
+	public Result exec(Request r) {
 		return r.exec();
 	}
 }

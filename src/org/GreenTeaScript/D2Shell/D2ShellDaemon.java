@@ -24,10 +24,8 @@ public class D2ShellDaemon {
 			D2ShellClient.getStreamSet().out = sv.stdout;
 			D2ShellClient.getStreamSet().err = sv.stderr;
 
-			CommandResult res = r.exec();
-			if(res.exception != null) {
-				sv.sendException(res.exception);
-			}
+			Result res = r.exec();
+			sv.sendResult(res);
 			sv.flush();
 		} catch(ClassNotFoundException | IOException e) {
 			e.printStackTrace();

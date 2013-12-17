@@ -11,7 +11,7 @@ import org.GreenTeaScript.DShell.DShellException;
 import org.GreenTeaScript.DShell.DShellProcess;
 
 public abstract class Request {
-	public abstract CommandResult exec();
+	public abstract Result exec();
 }
 
 class CommandRequest extends Request implements Serializable {
@@ -25,11 +25,11 @@ class CommandRequest extends Request implements Serializable {
 		this.input = in;
 	}
 	
-	public CommandResult exec() {
+	public Result exec() {
 		if(D2ShellClient.isDaemonMode()) {
 			System.out.println("[debug] " + Arrays.toString(this.command));
 		}
-		String out = "";
+		long stat = 0L;//FIXME
 		DShellException ex = null;
 		InputStream in0 = D2ShellClient.getStreamSet().in;
 		try {
@@ -40,7 +40,7 @@ class CommandRequest extends Request implements Serializable {
 		} finally {
 			D2ShellClient.getStreamSet().in = in0;
 		}
-		return new CommandResult(out, "", ex);
+		return new Result(stat, ex);
 	}
 }
 
@@ -70,7 +70,7 @@ class ScriptRequest extends Request implements Serializable {
 	}
 	
 	@Override
-	public CommandResult exec() {
+	public Result exec() {
 		if(D2ShellClient.isDaemonMode()) {
 			System.out.println("[debug] " + this.cname+"."+this.fname);
 		}
@@ -90,6 +90,6 @@ class ScriptRequest extends Request implements Serializable {
 		} catch(Exception e) {
 			e.printStackTrace();
 		}
-		return new CommandResult(res, "", ex);
+		return new Result(res, ex);
 	}
 }

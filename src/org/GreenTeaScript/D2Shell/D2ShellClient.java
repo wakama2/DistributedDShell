@@ -11,31 +11,15 @@ import org.GreenTeaScript.DShell.Task;
 
 public class D2ShellClient {
 
-	static LinkedList<CommandRequest> reqs = new LinkedList<CommandRequest>();
 	public static HashMap<String, Method> methods = new HashMap<String, Method>();//FIXME
 	public static HashMap<String, byte[]> byteCodeMap = new HashMap<String, byte[]>(); //FIXME
-
-//	static {
-//		Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
-//			public void run() {
-//				<String> hosts = new HashSet<String>();
-//				for(CommandRequest r : reqs) {
-//					for(String host : HostManager.getAddrs(r.host)) {
-//						hosts.add(host);
-//					}
-//				}
-//				for(String host : hosts) {
-//					sendKill(host);
-//				}
-//		}}));
-//	}
 
 	public static void sendKill(String host) {
 		CommandRequest req = new CommandRequest(new String[]{ D2ShellDaemon.KILL_CMD }, "");
 		Host.create(host).exec(req);
 	}
 
-	private static CommandResult Exec(String host, Request req) {
+	private static Result Exec(String host, Request req) {
 		return HostManager.getAddrs(host).exec(req);
 	}
 
@@ -52,7 +36,7 @@ public class D2ShellClient {
 		}
 		
 		String in = "";
-		CommandResult res = null;
+		Result res = null;
 		for(String[] cmd : cmds) {
 			String host = cmd[0];
 			if(host.equals("&")) break;//FIXME
@@ -68,7 +52,7 @@ public class D2ShellClient {
 
 	public static String ExecCommandString(String[]... cmds) {
 		String in = "";
-		CommandResult res = null;
+		Result res = null;
 		for(String[] cmd : cmds) {
 			String host = cmd[0];
 			if(host.equals("&")) break;//FIXME
@@ -141,7 +125,7 @@ public class D2ShellClient {
 				final String cname = m.getDeclaringClass().getName();
 				Thread th = new Thread() {
 					public void run() {
-						CommandResult res = Exec(host, new ScriptRequest(byteCodeMap,
+						Result res = Exec(host, new ScriptRequest(byteCodeMap,
 								cname, m.getName(), new Object[0]));
 						task.result = res.out;
 						synchronized(task) {
