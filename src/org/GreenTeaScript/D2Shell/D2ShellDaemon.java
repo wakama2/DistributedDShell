@@ -3,10 +3,18 @@ package org.GreenTeaScript.D2Shell;
 import java.io.*;
 import java.net.*;
 
+class D2ShellContext {
+	public InputStream stdin;
+	public PrintStream stdout;
+	public PrintStream stderr;
+	
+	// TODO: context pool
+	
+}
+
 public class D2ShellDaemon {
 
 	public static final int DEFAULT_PORT = 10000;
-	public static final String KILL_CMD = "<kill>";
 	
 	private final int port;
 
@@ -20,11 +28,11 @@ public class D2ShellDaemon {
 			Request r = sv.req;
 
 			// change thread-local stream
-			D2ShellClient.getStreamSet().in = sv.stdin;
-			D2ShellClient.getStreamSet().out = sv.stdout;
-			D2ShellClient.getStreamSet().err = sv.stderr;
-
-			Result res = r.exec();
+			D2ShellContext ctx = new D2ShellContext();
+			ctx.stdin = sv.stdin;
+			ctx.stdout = sv.stdout;
+			ctx.stderr = sv.stderr;
+			Result res = r.exec(ctx);
 			sv.sendResult(res);
 			sv.flush();
 		} catch(ClassNotFoundException | IOException e) {

@@ -1,6 +1,9 @@
 package org.GreenTeaScript.D2Shell;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.PrintStream;
 import java.net.Socket;
 
 import javax.net.SocketFactory;
@@ -8,7 +11,11 @@ import javax.net.SocketFactory;
 
 public abstract class Host {
 	
-	public abstract Result exec(Request req) ;
+//	public Result exec(Request req) {
+//		return exec(req, null, null, null);//FIXME
+//	}
+	
+	public abstract Result exec(Request req, InputStream stdin, OutputStream stdout, OutputStream stderr);
 	
 	public static Host create(String addr, int port) {
 		return new RemoteHost(addr, port);
@@ -53,9 +60,9 @@ class RemoteHost extends Host {
 	}
 
 	@Override
-	public Result exec(Request req) {
+	public Result exec(Request req, InputStream stdin, OutputStream stdout, OutputStream stderr) {
 		try(Socket sock = this.sf.createSocket(addr, port)) {
-			D2ShellProtocol.Client p = new D2ShellProtocol.Client(sock, req, D2ShellClient.getStreamSet().in);
+			D2ShellProtocol.Client p = new D2ShellProtocol.Client(sock, req, stdin, stdout, stderr);
 			return p.run();
 		} catch(IOException e) {
 			e.printStackTrace();
@@ -72,11 +79,11 @@ class HostGroup extends Host {
 	}
 	
 	@Override
-	public Result exec(Request req) {
+	public Result exec(Request req, InputStream stdin, OutputStream stdout, OutputStream stderr) {
 		Result res = null;
 		String out = "";
 		for(Host host : hosts) {
-			res = host.exec(req);
+			res = host.exec(req, stdin, stdout, stderr);
 			out += res.out;
 		}
 		res.out = out;
@@ -86,7 +93,11 @@ class HostGroup extends Host {
 
 class LocalHost extends Host {
 	@Override
-	public Result exec(Request r) {
-		return r.exec();
+	public Result exec(Request req, InputStream stdin, OutputStream stdout, OutputStream stderr) {
+		D2ShellContext ctx = new D2ShellContext();
+		ctx.stdin = stdin;
+		ctx.stdout = new PrintStream(stdout);
+		ctx.stderr = new PrintStream(stderr);
+		return req.exec(ctx);
 	}
 }

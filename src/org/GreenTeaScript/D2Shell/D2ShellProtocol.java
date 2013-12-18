@@ -15,36 +15,60 @@ class D2ShellProtocol {
 	static final int HEAD_STDERR = 2;
 	static final int HEAD_RESULT = 3;
 	
+	static final int HEAD_STDIN = 1;
+	static final int HEAD_CLOSE = 2;
+	
 	public static class Client {
 		Socket socket;
 		Request req;
 		InputStream stdin;
+		OutputStream stdout;
+		OutputStream stderr;
 		
 		//-----
 		DShellException exception;
 		
-		public Client(Socket socket, Request req, InputStream stdin) {
+		public Client(Socket socket, Request req, InputStream stdin, OutputStream stdout, OutputStream stderr) {
 			this.socket = socket;
 			this.req = req;
 			this.stdin = stdin;
+			this.stdout = stdout;
+			this.stderr = stderr;
 		}
 		
 		public Result run() {
 			Result res = null;
 			try {
 				// send request
+				final
 				ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
 				oos.writeObject(req);
 				oos.flush();
 				
 				// start sender thread
-				PipeInputStream p = new PipeInputStream(D2ShellClient.getStreamSet().in, oos);
-				p.start();
+				new Thread() {
+					public void run() {
+						try{
+							while(true) {
+								int b = stdin.read();
+								if(b != -1) {
+									oos.write(HEAD_STDIN);
+									oos.write(b);
+									oos.flush();
+								} else break;
+							}
+							oos.write(HEAD_CLOSE);
+							oos.flush();
+						} catch(IOException e) {
+							e.printStackTrace();
+						}
+					}
+				}.start();
+//				PipeInputStream p = new PipeInputStream(stdin, oos);
+//				p.start();
 				
 				// receive
 				ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
-				OutputStream stdout = D2ShellClient.getStreamSet().out;
-				OutputStream stderr = D2ShellClient.getStreamSet().err;
 				while(true) {
 					int header = in.read();
 					if(header == HEAD_STDOUT) {
@@ -57,11 +81,11 @@ class D2ShellProtocol {
 						break;
 					}
 				}
-				try{
-					p.join();
-				}catch(InterruptedException e) {
-					e.printStackTrace();
-				}
+//				try{
+//					p.join();
+//				}catch(InterruptedException e) {
+//					e.printStackTrace();
+//				}
 			} catch(IOException | ClassNotFoundException e) {
 				e.printStackTrace();
 			}
@@ -87,7 +111,21 @@ class D2ShellProtocol {
 			// receive request
 			this.req = (Request) this.is.readObject();
 			// set streams
-			this.stdin = is;
+//			this.stdin = is;
+			this.stdin = new InputStream() {
+				boolean closed = false;
+				@Override
+				public int read() throws IOException {
+					if(closed) return -1;
+					int h = is.read();
+					if(h == HEAD_STDIN) {
+						int b = is.read();
+						return b;
+					}
+					closed = true;
+					return -1;
+				}
+			};
 			this.stdout = new PrintStream(new OutputStream() {
 				@Override public void write(int b) throws IOException {
 					sendOut(b);
@@ -106,6 +144,7 @@ class D2ShellProtocol {
 			synchronized(os) {
 				os.write(HEAD_STDOUT);
 				os.write(b);
+				os.flush();
 			}
 		}
 		
@@ -113,6 +152,7 @@ class D2ShellProtocol {
 			synchronized(os) {
 				os.write(HEAD_STDERR);
 				os.write(b);
+				os.flush();
 			}
 		}
 		
@@ -133,9 +173,14 @@ class D2ShellProtocol {
 class PipeInputStream extends Thread {
 	InputStream is;
 	OutputStream os;
+	boolean closeOs;
 	public PipeInputStream(InputStream is, OutputStream os) {
+		this(is, os, false);
+	}
+	public PipeInputStream(InputStream is, OutputStream os, boolean closeOs) {
 		this.is = is;
 		this.os = os;
+		this.closeOs = closeOs;
 	}
 	@Override public void run() {
 		byte[] buf = new byte[256];
@@ -144,6 +189,7 @@ class PipeInputStream extends Thread {
 				int len = this.is.read(buf);
 				if(len != -1) {
 					this.os.write(buf, 0, len);
+					this.os.flush();
 				} else {
 					break;
 				}
@@ -151,7 +197,9 @@ class PipeInputStream extends Thread {
 		} catch(IOException e) {
 			e.printStackTrace();
 		} finally {
-//			try{this.os.close();} catch(IOException e) {}
+			if(closeOs) {
+				try{this.os.close();} catch(IOException e) {}
+			}
 		}
 	}
 }

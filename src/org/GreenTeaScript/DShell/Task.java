@@ -7,14 +7,13 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.PrintStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.EmptyStackException;
 import java.util.Stack;
 import java.util.regex.Pattern;
-
-import org.GreenTeaScript.D2Shell.D2ShellClient;
 
 public abstract class Task {
 	public abstract void join();
@@ -37,7 +36,7 @@ class TaskImpl extends Task {
 	private String stderrMessage;
 	private StringBuilder sBuilder;
 
-	public TaskImpl(DShellProcess dshellProc) {
+	public TaskImpl(DShellProcess dshellProc, InputStream stdin, PrintStream stdout, PrintStream stderr) {
 		this.dshellProc = dshellProc;
 		// start task
 		int OptionFlag = this.dshellProc.getOptionFlag();
@@ -48,7 +47,7 @@ class TaskImpl extends Task {
 
 		OutputStream stdoutStream = null;
 		if(DShellProcess.is(OptionFlag, DShellProcess.printable)) {
-			stdoutStream = D2ShellClient.getStreamSet().out;
+			stdoutStream = stdout;
 		}
 		InputStream[] srcOutStreams = new InputStream[1];
 		InputStream[] srcErrorStreams = new InputStream[ProcessSize];
@@ -61,7 +60,7 @@ class TaskImpl extends Task {
 
 		// Start Message Handler
 		// stdin
-		new PipeInputStream(D2ShellClient.getStreamSet().in, Processes[0].stdin).start();
+		new PipeInputStream(stdin, Processes[0].stdin).start();
 		// stdout
 		srcOutStreams[0] = lastProc.accessOutStream();
 		this.stdoutHandler = new MessageStreamHandler(srcOutStreams, stdoutStream);
@@ -70,7 +69,7 @@ class TaskImpl extends Task {
 		for(int i = 0; i < ProcessSize; i++) {
 			srcErrorStreams[i] = Processes[i].accessErrorStream();
 		}
-		this.stderrHandler = new MessageStreamHandler(srcErrorStreams, D2ShellClient.getStreamSet().err);
+		this.stderrHandler = new MessageStreamHandler(srcErrorStreams, stderr);
 		this.stderrHandler.showMessage();
 		// start monitor
 		this.isAsyncTask = DShellProcess.is(this.dshellProc.getOptionFlag(), DShellProcess.background);
@@ -166,7 +165,7 @@ class ProcMonitor extends Thread {	// TODO: support exit handle
 					}
 					msgBuilder.append(processes[i].getCmdName());
 				}
-				D2ShellClient.getStreamSet().err.print(msgBuilder.toString());
+				System.err.print(msgBuilder.toString());
 				// run exit handler
 			} 
 			catch (InterruptedException e) {
@@ -200,7 +199,7 @@ class ProcMonitor extends Thread {	// TODO: support exit handle
 					}
 					msgBuilder.append(processes[i].getCmdName());
 				}
-				D2ShellClient.getStreamSet().err.print(msgBuilder.toString());
+				System.err.print(msgBuilder.toString());
 				// run exit handler
 				return;
 			}

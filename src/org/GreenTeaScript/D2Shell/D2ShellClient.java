@@ -1,8 +1,10 @@
 package org.GreenTeaScript.D2Shell;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.PrintStream;
+import java.io.OutputStream;
 import java.lang.reflect.Method;
 import java.util.*;
 
@@ -14,69 +16,73 @@ public class D2ShellClient {
 	public static HashMap<String, Method> methods = new HashMap<String, Method>();//FIXME
 	public static HashMap<String, byte[]> byteCodeMap = new HashMap<String, byte[]>(); //FIXME
 
-	public static void sendKill(String host) {
-		CommandRequest req = new CommandRequest(new String[]{ D2ShellDaemon.KILL_CMD }, "");
-		Host.create(host).exec(req);
-	}
-
-	private static Result Exec(String host, Request req) {
-		return HostManager.getAddrs(host).exec(req);
-	}
-
 	public static void ExecCommandVoid(String[]... cmds) throws DShellException {
+		ExecCommand(defaultCtx.stdout, defaultCtx.stderr, cmds);
+	}
+	
+	public static Result ExecCommand(String[]... cmds) throws DShellException {
+		return ExecCommand(defaultCtx.stdout, defaultCtx.stderr, cmds);
+	}
+	
+	public static Result ExecCommand(OutputStream defStdout, OutputStream defErr, String[]... cmds) throws DShellException {
 		// FIXME: remote method invocation
 		if(cmds.length == 1 && cmds[0].length >= 2) {
 			Method m = methods.get(cmds[0][1]);
 			if(m != null) {
-				String host = cmds[0][0];
+				Host host = HostManager.getAddrs(cmds[0][0]);
 				String cname = m.getDeclaringClass().getName();
-				Exec(host, new ScriptRequest(byteCodeMap, cname, m.getName(), new Object[0]));
-				return;
+				return host.exec(new ScriptRequest(byteCodeMap, cname, m.getName(), new Object[0]),
+						defaultCtx.stdin, defStdout, defaultCtx.stderr);
 			}
 		}
-		
-		String in = "";
 		Result res = null;
-		for(String[] cmd : cmds) {
-			String host = cmd[0];
-			if(host.equals("&")) break;//FIXME
-			String[] cmd2 = Arrays.copyOfRange(cmd, 1, cmd.length);
-			res = Exec(host, new CommandRequest(cmd2, in));
+		InputStream stdin = defaultCtx.stdin;
+		for(int i=0; i<cmds.length; i++) {
+			boolean isLast = i == cmds.length - 1;
+			OutputStream stdout;
+			OutputStream stderr;
+			if(isLast) {
+				stdout = defStdout;
+				stderr = defaultCtx.stderr;
+			} else {
+				stdout = new ByteArrayOutputStream();
+				stderr = defaultCtx.stderr;
+			}
+			String[] host_and_command = cmds[i];
+			Host host = HostManager.getAddrs(host_and_command[0]);
+			String[] cmd = Arrays.copyOfRange(host_and_command, 1, host_and_command.length);
+			Request req = new CommandRequest(cmd);
+			res = host.exec(req, stdin, stdout, stderr);
 			if(res.exception != null) {
 				throw res.exception;
 			}
-			in = res.out.toString();
+			if(!isLast) {
+				ByteArrayOutputStream bo = ((ByteArrayOutputStream)stdout);
+				stdin = new ByteArrayInputStream(bo.toByteArray());
+			}
 		}
-		D2ShellClient.getStreamSet().out.print(res.out);
+		return res;
 	}
 
 	public static String ExecCommandString(String[]... cmds) {
-		String in = "";
-		Result res = null;
-		for(String[] cmd : cmds) {
-			String host = cmd[0];
-			if(host.equals("&")) break;//FIXME
-			String[] cmd2 = Arrays.copyOfRange(cmd, 1, cmd.length);
-			res = Exec(host, new CommandRequest(cmd2, in));
-			if(res.exception != null) {
-				throw res.exception;
-			}
-			in = res.out.toString();
-		}
-		return res.out.toString();
+		ByteArrayOutputStream os = new ByteArrayOutputStream();
+		ExecCommand(os, defaultCtx.stderr, cmds);
+		return os.toString();
 	}
 
 	public static boolean ExecCommandBool(String[]... cmds) {
+		//TODO
 		return false;
 	}
 	
 	static class D2Task extends Task {
 		boolean finish = false;
-		Object result = "";
-		DShellException exception;
+		Result result;
+		String stdout;
+		String stderr;
 		
 		public Object getResult() {
-			return this.result;
+			return this.result.out;
 		}
 		
 		public void join() throws DShellException {
@@ -87,8 +93,8 @@ public class D2ShellClient {
 					}
 				} catch(InterruptedException e) {}
 			}
-			if(this.exception != null) {
-				throw this.exception;
+			if(this.result.exception != null) {
+				throw this.result.exception;
 			}
 		}
 
@@ -99,35 +105,38 @@ public class D2ShellClient {
 
 		@Override
 		public String getOutMessage() {
-			return this.result.toString();
+			return this.stdout;
 		}
 
 		@Override
 		public String getErrorMessage() {
-			// TODO Auto-generated method stub
-			return "";
+			return this.stderr;
 		}
 
 		@Override
 		public int getExitStatus() {
-			// TODO Auto-generated method stub
+			//TODO
 			return 0;
 		}
 	}
 
-	public static Task ExecCommandTask(final String[]... cmds) {
+	public static Task ExecCommandTask(String[]... cmds) {
 		final D2Task task = new D2Task();
 		// FIXME: remote method invocation
 		if(cmds.length == 1 && cmds[0].length >= 2) {
 			final Method m = methods.get(cmds[0][1]);
 			if(m != null) {
-				final String host = cmds[0][0];
+				final Host host = HostManager.getAddrs(cmds[0][0]);
 				final String cname = m.getDeclaringClass().getName();
 				Thread th = new Thread() {
 					public void run() {
-						Result res = Exec(host, new ScriptRequest(byteCodeMap,
-								cname, m.getName(), new Object[0]));
-						task.result = res.out;
+						ByteArrayOutputStream out = new ByteArrayOutputStream();
+						ByteArrayOutputStream err = new ByteArrayOutputStream();
+						Result res = host.exec(new ScriptRequest(byteCodeMap, cname, m.getName(), new Object[0]),
+								defaultCtx.stdin, out, err);
+						task.result = res;
+						task.stdout = out.toString();
+						task.stderr = err.toString();
 						synchronized(task) {
 							task.finish = true;
 							task.notifyAll();
@@ -141,13 +150,17 @@ public class D2ShellClient {
 				return task;
 			}
 		}
+		if(cmds[cmds.length-1][0].equals("&")) {
+			cmds = Arrays.copyOfRange(cmds, 0, cmds.length-1);
+		}
+		final String[][] cmds1 = cmds;
 		final Thread th = new Thread(new Runnable() {
 			public void run() {
-				try {
-					task.result = ExecCommandString(cmds);
-				} catch(DShellException e) {
-					task.exception = e;
-				}
+				ByteArrayOutputStream out = new ByteArrayOutputStream();
+				ByteArrayOutputStream err = new ByteArrayOutputStream();
+				task.result = ExecCommand(out, err, cmds1);
+				task.stdout = out.toString();
+				task.stderr = err.toString();
 				synchronized(task) {
 					task.finish = true;
 					task.notifyAll();
@@ -158,30 +171,28 @@ public class D2ShellClient {
 		return task;
 	}
 	
-	public static class LocalInfo {
-//		public InputStream in = System.in;
-		public InputStream in = new InputStream() {
+	public static D2ShellContext defaultCtx = new D2ShellContext() {{
+		this.stdin = new InputStream() {
 			@Override public int read() throws IOException {
 				return -1;
 			}
 		};
-		public PrintStream out = System.out;
-		public PrintStream err = System.err;
-		public boolean daemon_mode = true;
-	}
+		this.stdout = System.out;
+		this.stderr = System.err;
+	}};
 	
-	private static ThreadLocal<LocalInfo> streamInfo = new ThreadLocal<LocalInfo>() {
-		@Override protected LocalInfo initialValue() {
-			return new LocalInfo();
-		}
-	};
+//	private static ThreadLocal<LocalInfo> streamInfo = new ThreadLocal<LocalInfo>() {
+//		@Override protected LocalInfo initialValue() {
+//			return new LocalInfo();
+//		}
+//	};
 	
-	public static LocalInfo getStreamSet() { return streamInfo.get(); }
+//	public static LocalInfo getStreamSet() { return streamInfo.get(); }
 	
-	public static boolean isDaemonMode() { return streamInfo.get().daemon_mode; }
+	public static boolean isDaemonMode() { return true; }//streamInfo.get().daemon_mode; }
 	
 	public static void startup() {
-		streamInfo.get().daemon_mode = false;
+//		streamInfo.get().daemon_mode = false;
 	}
 
 	public static void shutdown() {

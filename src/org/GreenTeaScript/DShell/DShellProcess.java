@@ -10,6 +10,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.PrintStream;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -40,8 +41,19 @@ public class DShellProcess {
 
 	public MessageStreamHandler stdoutHandler;
 	public MessageStreamHandler stderrHandler;
+	
+	InputStream stdin;
+	PrintStream stdout;
+	PrintStream stderr;
 
 	public DShellProcess(String[][] cmds, int option, int retType) {
+		this(cmds, option, retType, System.in, System.out, System.err);
+	}
+	
+	public DShellProcess(String[][] cmds, int option, int retType, InputStream stdin, PrintStream stdout, PrintStream stderr) {
+		this.stdin = stdin;
+		this.stdout = stdout;
+		this.stderr = stderr;
 		this.OptionFlag = option;
 		this.retType = retType;
 		String[][] newCmds = this.PrepareInternalOption(cmds);
@@ -82,7 +94,7 @@ public class DShellProcess {
 	}
 
 	public Object Invoke() {
-		Task task = new TaskImpl(this);
+		Task task = new TaskImpl(this, stdin, stdout, stderr);
 		if(is(this.OptionFlag, background)) {
 			return (this.retType == TaskType) && is(this.OptionFlag, returnable) ? task : null;
 		}
@@ -240,6 +252,10 @@ public class DShellProcess {
 	public static Task ExecCommandTask(String[]... cmds) {
 		int option = returnable | printable | throwable | inference;
 		return (Task) new DShellProcess(cmds, option, TaskType).Invoke();
+	}
+	public static void ExecCommand(InputStream stdin, PrintStream stdout, PrintStream stderr, String[]...cmds) {
+		int option = printable | throwable | inference;
+		new DShellProcess(cmds, option, VoidType, stdin, stdout, stderr).Invoke();
 	}
 
 	// file system roll back function

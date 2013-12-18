@@ -1,7 +1,5 @@
 package org.GreenTeaScript.D2Shell;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
 import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.util.Arrays;
@@ -11,34 +9,28 @@ import org.GreenTeaScript.DShell.DShellException;
 import org.GreenTeaScript.DShell.DShellProcess;
 
 public abstract class Request {
-	public abstract Result exec();
+	public abstract Result exec(D2ShellContext ctx);
 }
 
 class CommandRequest extends Request implements Serializable {
 	private static final long serialVersionUID = -3762794483693239635L;
 	
 	public String[] command;
-	public String input;
 	
-	public CommandRequest(String[] cmd, String in) {
+	public CommandRequest(String[] cmd) {
 		this.command = cmd;
-		this.input = in;
 	}
 	
-	public Result exec() {
+	public Result exec(D2ShellContext ctx) {
 		if(D2ShellClient.isDaemonMode()) {
 			System.out.println("[debug] " + Arrays.toString(this.command));
 		}
 		long stat = 0L;//FIXME
 		DShellException ex = null;
-		InputStream in0 = D2ShellClient.getStreamSet().in;
 		try {
-			D2ShellClient.getStreamSet().in = new ByteArrayInputStream(this.input.getBytes());
-			DShellProcess.ExecCommandVoid(this.command);
+			DShellProcess.ExecCommand(ctx.stdin, ctx.stdout, ctx.stderr, this.command);
 		} catch(DShellException e) {
 			ex = e;
-		} finally {
-			D2ShellClient.getStreamSet().in = in0;
 		}
 		return new Result(stat, ex);
 	}
@@ -70,7 +62,7 @@ class ScriptRequest extends Request implements Serializable {
 	}
 	
 	@Override
-	public Result exec() {
+	public Result exec(D2ShellContext ctx) {
 		if(D2ShellClient.isDaemonMode()) {
 			System.out.println("[debug] " + this.cname+"."+this.fname);
 		}
@@ -79,6 +71,7 @@ class ScriptRequest extends Request implements Serializable {
 		for(int i=0; i<argTypes.length; i++) {
 			argTypes[i] = this.args.getClass();
 		}
+		//TODO: change stdio to ctx.*
 		Object res = "";
 		DShellException ex = null;
 		try {
