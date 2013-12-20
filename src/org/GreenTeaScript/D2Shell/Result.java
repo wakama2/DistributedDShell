@@ -5,6 +5,7 @@ import java.util.ArrayList;
 
 import org.GreenTeaScript.DShell.DShellException;
 import org.GreenTeaScript.DShell.MultipleException;
+import org.GreenTeaScript.Konoha.ArrayApi;
 
 public class Result implements Serializable {
 	private static final long serialVersionUID = 200L;
@@ -34,6 +35,7 @@ public class Result implements Serializable {
 		} else {
 			e = new MultipleException("", elist.toArray(new DShellException[0]));
 		}
-		return new Result(outs, e);
+		return new Result(ArrayApi.ObjectArrayToGreenArray(outs), e);
+		//return new Result(outs, e);
 	}
 }

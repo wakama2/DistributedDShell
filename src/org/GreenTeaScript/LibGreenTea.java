@@ -43,16 +43,19 @@ import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Iterator;
 
+import org.GreenTeaScript.D2Shell.D2ShellClient;
 import org.GreenTeaScript.Konoha.ArrayApi;
 
 public abstract class LibGreenTea implements GreenTeaConsts {
 	// LibGreenTea KonohaApi
 	public final static void print(Object msg) {
-		System.out.print(msg);
+		//System.out.print(msg);
+		D2ShellClient.getCtx().stdout.print(msg);
 	}
 
 	public final static void println(Object msg) {
-		System.out.println(msg);
+		//System.out.println(msg);
+		D2ShellClient.getCtx().stdout.println(msg);
 	}
 	
 	public final static void Assert(boolean TestResult) {

@@ -8,7 +8,6 @@ import java.net.Socket;
 
 import javax.net.SocketFactory;
 
-
 public abstract class Host {
 	
 	public abstract Result exec(Request req, InputStream stdin, OutputStream stdout, OutputStream stderr);

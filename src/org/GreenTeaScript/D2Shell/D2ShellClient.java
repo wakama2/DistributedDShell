@@ -181,13 +181,13 @@ public class D2ShellClient {
 		this.stderr = System.err;
 	}};
 	
-//	private static ThreadLocal<LocalInfo> streamInfo = new ThreadLocal<LocalInfo>() {
-//		@Override protected LocalInfo initialValue() {
-//			return new LocalInfo();
-//		}
-//	};
+	private static ThreadLocal<D2ShellContext> streamInfo = new ThreadLocal<D2ShellContext>() {
+		@Override protected D2ShellContext initialValue() {
+			return defaultCtx;
+		}
+	};
 	
-//	public static LocalInfo getStreamSet() { return streamInfo.get(); }
+	public static D2ShellContext getCtx() { return streamInfo.get(); }
 	
 	public static boolean isDaemonMode() { return true; }//streamInfo.get().daemon_mode; }
 	

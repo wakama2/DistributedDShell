@@ -3,15 +3,6 @@ package org.GreenTeaScript.D2Shell;
 import java.io.*;
 import java.net.*;
 
-class D2ShellContext {
-	public InputStream stdin;
-	public PrintStream stdout;
-	public PrintStream stderr;
-	
-	// TODO: context pool
-	
-}
-
 public class D2ShellDaemon {
 
 	public static final int DEFAULT_PORT = 10000;
@@ -28,7 +19,7 @@ public class D2ShellDaemon {
 			Request r = sv.req;
 
 			// change thread-local stream
-			D2ShellContext ctx = new D2ShellContext();
+			D2ShellContext ctx = D2ShellClient.getCtx();
 			ctx.stdin = sv.stdin;
 			ctx.stdout = sv.stdout;
 			ctx.stderr = sv.stderr;
